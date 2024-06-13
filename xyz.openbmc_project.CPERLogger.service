@@ -1,0 +1,14 @@
+[Unit]
+Description=CPER logger
+StopWhenUnneeded=false
+
+[Service]
+Restart=always
+RestartSec=5
+ExecStart=@INSTALL_PREFIX@/bin/cper-logger
+SyslogIdentifier=cper-logger
+Type=dbus
+BusName=xyz.openbmc_project.CPERLogger
+
+[Install]
+WantedBy=multi-user.target

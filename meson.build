@@ -71,8 +71,8 @@ systemd_system_unit_dir = systemd.get_variable(
 systemd_unit_configuration = configuration_data()
 systemd_unit_configuration.set('INSTALL_PREFIX', get_option('prefix'))
 
-configure_file(input: 'xyz.openbmc_project.cperlogger.service',
-               output: 'xyz.openbmc_project.cperlogger.service',
+configure_file(input: 'xyz.openbmc_project.CPERLogger.service',
+               output: 'xyz.openbmc_project.CPERLogger.service',
                configuration: systemd_unit_configuration,
                install_dir: systemd_system_unit_dir,
                install: true)

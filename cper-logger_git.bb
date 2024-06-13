@@ -15,7 +15,7 @@ SRCREV = "efe9f17637ed27457f2effa52ec215aa093267d9"
 
 PV = "1.0+git${SRCPV}"
 
-SYSTEMD_SERVICE:${PN}:append = "xyz.openbmc_project.cperlogger.service"
+SYSTEMD_SERVICE:${PN}:append = "xyz.openbmc_project.CPERLogger.service"
 
 S = "${WORKDIR}/git"
 

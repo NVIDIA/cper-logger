@@ -3,4 +3,4 @@
 #include <cstdint>
 #include <string>
 
-std::string logCPER(const std::string& keyVal);
+void logCPER(const std::string& keyVal);
