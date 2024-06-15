@@ -77,10 +77,26 @@ configure_file(input: 'xyz.openbmc_project.CPERLogger.service',
                install_dir: systemd_system_unit_dir,
                install: true)
 
+json_c_dep = dependency(
+              'json-c',
+              required: true,
+              fallback : ['json-c', 'json_c_dep'])
+
+libcper_dep = dependency(
+              'libcper',
+              required: true,
+              fallback : ['libcper', 'libcper_dep'])
+
 cper_logger_a = static_library(
     'cper_logger_a',
-    'src/cper_logger.cpp',
-    include_directories: 'include',
+    'src/cper.cpp',
+    dependencies: [
+      json_c_dep,
+    ],
+    include_directories: [
+        'include',
+        'src',
+    ],
 )
 
 executable(
@@ -89,8 +105,12 @@ executable(
     dependencies: [
       boost,
       sdbusplus,
+      libcper_dep,
     ],
-    include_directories: 'include',
+    include_directories: [
+        'include',
+        'src',
+    ],
     install: true,
     link_with: [
         cper_logger_a,
@@ -129,6 +149,7 @@ if get_option('tests').enabled()
       ],
       include_directories: [
           'include',
+          'src',
       ],
       link_with: [
           cper_logger_a,
