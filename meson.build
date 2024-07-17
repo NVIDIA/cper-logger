@@ -87,11 +87,18 @@ libcper_dep = dependency(
               required: true,
               fallback : ['libcper', 'libcper_dep'])
 
+libbase64_dep = dependency(
+              'libbase64',
+              required: true,
+              fallback : ['libbase64', 'libbase64_dep'])
+
 cper_logger_a = static_library(
     'cper_logger_a',
     'src/cper.cpp',
     dependencies: [
+      libcper_dep,
       json_c_dep,
+      libbase64_dep,
     ],
     include_directories: [
         'include',

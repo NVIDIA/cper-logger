@@ -44,11 +44,13 @@ private:
     const std::string toDbusSeverity(const std::string& severity) const;
     const std::string toNvSeverity(int severity) const;
     const std::string toHexString(int num, size_t width) const;
+    const std::string toBase64String(const std::vector<uint8_t>& data) const;
 
 private:
 
     // from input
     nlohmann::json jsonData;
+    std::vector<uint8_t> cperData;
 
     // saved flags
     int isValid;

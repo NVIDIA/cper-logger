@@ -8,6 +8,7 @@ extern "C"
 {
 #include <cper-parse.h>
 }
+#include <libbase64.h>
 
 #include "cper.hpp"
 
@@ -130,11 +131,15 @@ CPER::readPldmFile(const std::string& filename)
 
         if (pldm_data.size() >= sizeof(*hdr))
         {
+            int len = le16toh(hdr->data_length);
+
             std::cout << "Format Type: " << (int)hdr->format_type << std::endl;
-            std::cout << "Data Length: " << hdr->data_length << std::endl;
+            std::cout << "Data Length: " << len << std::endl;
+
+            this->cperData.assign(pldm_data.begin() + sizeof(*hdr), pldm_data.end());
 
             // skip the pldm_header & create a FILE* for libcper
-            FILE* file = fmemopen(&pldm_data[sizeof(*hdr)], hdr->data_length, "r");
+            FILE* file = fmemopen(&this->cperData[0], len, "r");
 
             // 0:Full CPER (with Header & multiple Sections), 1:Single section (no Header)
             if (0 == hdr->format_type)
@@ -299,6 +304,7 @@ CPER::prepareToLog()
             convertSection(sections[worst]);
     }
 
+    additionalData["DiagnosticData"] = toBase64String(this->cperData);
     additionalData["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
 }
 
@@ -395,3 +401,18 @@ CPER::toHexString(int num, size_t width) const
     hexStr << "0x" << std::hex << std::setw(width) << std::setfill('0') << num;
     return hexStr.str();
 }
+
+// ... to base64
+const std::string
+CPER::toBase64String(const std::vector<uint8_t>& data) const
+{
+    std::string encodedData;
+    size_t encodedLen = 4 * ((data.size() + 2)/3);
+
+    encodedData.resize(encodedLen);
+    base64_encode(reinterpret_cast<const char*>(data.data()), data.size(), &encodedData[0], &encodedLen, 0);
+    encodedData.resize(encodedLen);
+
+    return encodedData;
+}
+
