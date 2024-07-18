@@ -19,7 +19,8 @@ static const nlohmann::json invalidJson = \
 
 // Constructor from file
 CPER::CPER(const std::string& filename)
-    : jsonData(invalidJson)
+    : cperPath(filename),
+      jsonData(invalidJson)
 {
     readJsonFile(filename);
 
@@ -58,14 +59,22 @@ CPER::findArray(const nlohmann::json& data, const std::string& key) const
 void
 CPER::log() const
 {
-    for (const auto& pair : additionalData)
+    std::map<std::string, std::variant<std::string, uint64_t>> dumpData;
+
+    for (const auto& pair : this->additionalData)
     {
         std::cout << pair.first << ": " << pair.second << std::endl;
+        if ("DiagnosticDataType" == pair.first)
+        {
+            dumpData["CPER_PATH"] = this->cperPath;
+            dumpData["CPER_TYPE"] = pair.second;
+        }
     }
 
     // Shared context
     extern std::shared_ptr<sdbusplus::asio::connection> conn;
 
+    // Send to phosphor-logging
     conn->async_method_call(
         // callback
         [](boost::system::error_code ec, sdbusplus::message::message& msg)
@@ -85,8 +94,34 @@ CPER::log() const
         "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
         "xyz.openbmc_project.Logging.Create", "Create",
         // parameters: ssa{ss}
-        "CPER logged", toDbusSeverity(this->cperSeverity), additionalData
+        "CPER logged", toDbusSeverity(this->cperSeverity), this->additionalData
     );
+
+    // Legacy: Also send to dump-manager
+    if (!dumpData.empty())
+    {
+        conn->async_method_call(
+            // callback
+            [](boost::system::error_code ec, sdbusplus::message::message& msg)
+            {
+                std::cerr << "Response" << std::endl;
+                std::cerr << ec << std::endl;
+                if(!ec)
+                {
+                    std::cout << "Success " << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Error " << msg.get_errno() << std::endl;
+                }
+            },
+            // dbus method: service, object, interface, method
+            "xyz.openbmc_project.Dump.Manager", "/xyz/openbmc_project/dump/faultlog",
+            "xyz.openbmc_project.Dump.Create", "CreateDump",
+            // parameters: a{sv}
+            dumpData
+        );
+    }
 }
 
 // Private funtions

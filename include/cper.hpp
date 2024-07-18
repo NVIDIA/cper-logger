@@ -48,6 +48,9 @@ private:
 
 private:
 
+    // input file
+    std::string cperPath;
+
     // from input
     nlohmann::json jsonData;
     std::vector<uint8_t> cperData;
