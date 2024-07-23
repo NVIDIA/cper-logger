@@ -95,7 +95,6 @@ cper_logger_a = static_library(
       json_c_dep,
     ],
     include_directories: [
-        'include',
         'src',
     ],
 )
@@ -109,7 +108,6 @@ executable(
       libcper_dep,
     ],
     include_directories: [
-        'include',
         'src',
     ],
     install: true,
@@ -149,7 +147,6 @@ if get_option('tests').enabled()
           gtest_dep,
       ],
       include_directories: [
-          'include',
           'src',
       ],
       link_with: [
