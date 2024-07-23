@@ -7,8 +7,8 @@
 extern "C"
 {
 #include <cper-parse.h>
+#include <libcper/base64.h>
 }
-#include <libbase64.h>
 
 #include "cper.hpp"
 
@@ -441,12 +441,17 @@ CPER::toHexString(int num, size_t width) const
 const std::string
 CPER::toBase64String(const std::vector<uint8_t>& data) const
 {
-    std::string encodedData;
-    size_t encodedLen = 4 * ((data.size() + 2)/3);
+    int encodedLen = data.size();
+    char* enc = base64_encode(data.data(), data.size(), &encodedLen);
 
-    encodedData.resize(encodedLen);
-    base64_encode(reinterpret_cast<const char*>(data.data()), data.size(), &encodedData[0], &encodedLen, 0);
-    encodedData.resize(encodedLen);
+    if (nullptr == enc)
+    {
+        std::cerr << "Failed to encode" << std::endl;
+        return std::string();
+    }
+
+    std::string encodedData = enc;
+    free(enc);
 
     return encodedData;
 }
