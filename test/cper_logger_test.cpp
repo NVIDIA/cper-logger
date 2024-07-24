@@ -2,6 +2,6 @@
 
 #include <gtest/gtest.h>
 
-TEST(CPERLogger, CPER_Logging_CreateLog)
+TEST(CPERLogger, cperCreateLog)
 {
 }
