@@ -1,7 +1,7 @@
+#include "cper.hpp"
+
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
-
-#include "cper.hpp"
 
 std::shared_ptr<sdbusplus::asio::connection> conn = nullptr;
 

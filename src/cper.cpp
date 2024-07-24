@@ -1,8 +1,8 @@
-#include <iostream>
-#include <fstream>
-
 #include <boost/asio.hpp>
 #include <sdbusplus/asio/connection.hpp>
+
+#include <fstream>
+#include <iostream>
 
 extern "C"
 {
@@ -15,8 +15,7 @@ extern "C"
 // Public functions
 
 // Constructor from file
-CPER::CPER(const std::string& filename)
-    : cperPath(filename)
+CPER::CPER(const std::string& filename) : cperPath(filename)
 {
     readPldmFile(filename);
 
@@ -32,8 +31,7 @@ CPER::CPER(const std::string& filename)
 }
 
 // Log to sdbus
-void
-CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
+void CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
 {
     std::map<std::string, std::variant<std::string, uint64_t>> dumpData;
 
@@ -49,13 +47,13 @@ CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
         }
     }
 
-    auto cbFn = [](const boost::system::error_code& ec, sdbusplus::message::message& msg)
+    auto cbFn = [](const boost::system::error_code& ec,
+                   sdbusplus::message::message& msg) {
+        if (ec)
         {
-            if(ec)
-            {
-                std::cerr << "Error " << msg.get_errno() << std::endl;
-            }
-        };
+            std::cerr << "Error " << msg.get_errno() << std::endl;
+        }
+    };
 
     // Send to phosphor-logging
     conn->async_method_call(
@@ -65,8 +63,8 @@ CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
         "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
         "xyz.openbmc_project.Logging.Create", "Create",
         // parameters: ssa{ss}
-        "A CPER was logged", toDbusSeverity(this->cperSeverity), this->additionalData
-    );
+        "A CPER was logged", toDbusSeverity(this->cperSeverity),
+        this->additionalData);
 
     // Legacy: Also send to dump-manager
     if (!dumpData.empty())
@@ -75,11 +73,11 @@ CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
             // callback
             cbFn,
             // dbus method: service, object, interface, method
-            "xyz.openbmc_project.Dump.Manager", "/xyz/openbmc_project/dump/faultlog",
+            "xyz.openbmc_project.Dump.Manager",
+            "/xyz/openbmc_project/dump/faultlog",
             "xyz.openbmc_project.Dump.Create", "CreateDump",
             // parameters: a{sv}
-            dumpData
-        );
+            dumpData);
     }
 }
 
@@ -87,8 +85,7 @@ CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
 
 // Load json from file
 #ifdef CPER_LOGGER_DEBUG_TRACE
-void
-CPER::readJsonFile(const std::string& filename)
+void CPER::readJsonFile(const std::string& filename)
 {
     std::ifstream jsonFile(filename.c_str());
 
@@ -102,8 +99,7 @@ CPER::readJsonFile(const std::string& filename)
 }
 #endif
 
-void
-CPER::readPldmFile(const std::string& filename)
+void CPER::readPldmFile(const std::string& filename)
 {
     const size_t pldmHeaderSize = 4;
     const size_t sectionDescriptorSize = 72;
@@ -122,10 +118,12 @@ CPER::readPldmFile(const std::string& filename)
     std::vector<uint8_t> pldmData((std::istreambuf_iterator<char>(cperFile)),
                                   std::istreambuf_iterator<char>());
 
-    // 1st 4 bytes are a PLDM header, and there needs to be at least 1 section-descriptor
+    // 1st 4 bytes are a PLDM header, and there needs to be at least 1
+    // section-descriptor
     if (pldmData.size() < pldmHeaderSize + sectionDescriptorSize)
     {
-        std::cerr << std::format("Invalid CPER: Got {} bytes", pldmData.size()) << std::endl;
+        std::cerr << std::format("Invalid CPER: Got {} bytes", pldmData.size())
+                  << std::endl;
         return;
     }
 
@@ -134,18 +132,21 @@ CPER::readPldmFile(const std::string& filename)
 
     if (type > 1)
     {
-        std::cerr << std::format("Invalid CPER: Got format-type {}", type) << std::endl;
+        std::cerr << std::format("Invalid CPER: Got format-type {}", type)
+                  << std::endl;
         return;
     }
 
     if (pldmData.size() - pldmHeaderSize < len)
     {
-        std::cerr << std::format("Invalid CPER: Got length {}", len) << std::endl;
+        std::cerr << std::format("Invalid CPER: Got length {}", len)
+                  << std::endl;
         return;
     }
 
     // copy the CPER binary for encoding later
-    this->cperData.assign(pldmData.begin() + pldmHeaderSize, pldmData.begin() + len);
+    this->cperData.assign(pldmData.begin() + pldmHeaderSize,
+                          pldmData.begin() + len);
 
     // create a FILE* for libcper
     FILE* file = fmemopen(this->cperData.data(), len, "r");
@@ -170,8 +171,7 @@ CPER::readPldmFile(const std::string& filename)
 
 // convert to logging
 // ... header
-void
-CPER::convertHeader(const nlohmann::json& header)
+void CPER::convertHeader(const nlohmann::json& header)
 {
     if (!this->isValid)
     {
@@ -182,7 +182,8 @@ CPER::convertHeader(const nlohmann::json& header)
     const auto type = header.find("notificationType");
     if (type != header.end())
     {
-        additionalData["NotificationTypeGUID"] = type->value("guid", "Not Available");
+        additionalData["NotificationTypeGUID"] =
+            type->value("guid", "Not Available");
         additionalData["NotificationType"] = type->value("type", "Unknown");
     }
 
@@ -201,8 +202,7 @@ CPER::convertHeader(const nlohmann::json& header)
 }
 
 // .. sectionDescriptor
-void
-CPER::convertSectionDescriptor(const nlohmann::json& desc)
+void CPER::convertSectionDescriptor(const nlohmann::json& desc)
 {
     if (!this->isValid)
     {
@@ -216,7 +216,8 @@ CPER::convertSectionDescriptor(const nlohmann::json& desc)
         this->sectionType = type->value("type", "Unknown");
         additionalData["SectionType"] = this->sectionType;
 
-        additionalData["SectionTypeGUID"] = type->value("data", "Not Available");
+        additionalData["SectionTypeGUID"] =
+            type->value("data", "Not Available");
     }
 
     const auto severity = desc.find("severity");
@@ -233,8 +234,7 @@ CPER::convertSectionDescriptor(const nlohmann::json& desc)
 }
 
 // .. section
-void
-CPER::convertSection(const nlohmann::json& section)
+void CPER::convertSection(const nlohmann::json& section)
 {
     if (!this->isValid)
     {
@@ -253,8 +253,7 @@ CPER::convertSection(const nlohmann::json& section)
 }
 
 // ... PCIe section
-void
-CPER::convertSectionPCIe(const nlohmann::json& section)
+void CPER::convertSectionPCIe(const nlohmann::json& section)
 {
     if (!this->isValid)
     {
@@ -264,28 +263,37 @@ CPER::convertSectionPCIe(const nlohmann::json& section)
 
     if ("PCIe" != this->sectionType)
     {
-        std::cerr << std::format("Skipping {} section", this->sectionType) << std::endl;
+        std::cerr << std::format("Skipping {} section", this->sectionType)
+                  << std::endl;
         return;
     }
 
     const auto pciId = section.find("deviceID");
     if (pciId != section.end())
     {
-        additionalData["PCIeVendorId"] = toHexString(pciId->value("vendorID", -1), 4);
-        additionalData["PCIeDeviceId"] = toHexString(pciId->value("deviceID", -1), 4);
-        additionalData["PCIeClassCode"] = toHexString(pciId->value("classCode", -1), 6);
-        additionalData["PCIeFunctionNumber"] = toHexString(pciId->value("functionNumber", -1), 2);
-        additionalData["PCIeDeviceNumber"] = toHexString(pciId->value("deviceNumber", -1), 2);
-        additionalData["PCIeSegmentNumber"] = toHexString(pciId->value("segmentNumber", -1), 4);
-        additionalData["PCIeDeviceBusNumber"] = toHexString(pciId->value("primaryOrDeviceBusNumber", -1), 2);
-        additionalData["PCIeSecondaryBusNumber"] = toHexString(pciId->value("secondaryBusNumber", -1), 2);
-        additionalData["PCIeSlotNumber"] = toHexString(pciId->value("slotNumber", -1), 4);
+        additionalData["PCIeVendorId"] =
+            toHexString(pciId->value("vendorID", -1), 4);
+        additionalData["PCIeDeviceId"] =
+            toHexString(pciId->value("deviceID", -1), 4);
+        additionalData["PCIeClassCode"] =
+            toHexString(pciId->value("classCode", -1), 6);
+        additionalData["PCIeFunctionNumber"] =
+            toHexString(pciId->value("functionNumber", -1), 2);
+        additionalData["PCIeDeviceNumber"] =
+            toHexString(pciId->value("deviceNumber", -1), 2);
+        additionalData["PCIeSegmentNumber"] =
+            toHexString(pciId->value("segmentNumber", -1), 4);
+        additionalData["PCIeDeviceBusNumber"] =
+            toHexString(pciId->value("primaryOrDeviceBusNumber", -1), 2);
+        additionalData["PCIeSecondaryBusNumber"] =
+            toHexString(pciId->value("secondaryBusNumber", -1), 2);
+        additionalData["PCIeSlotNumber"] =
+            toHexString(pciId->value("slotNumber", -1), 4);
     }
 }
 
 // ... NVIDIA section
-void
-CPER::convertSectionNVIDIA(const nlohmann::json& section)
+void CPER::convertSectionNVIDIA(const nlohmann::json& section)
 {
     if (!this->isValid)
     {
@@ -295,7 +303,8 @@ CPER::convertSectionNVIDIA(const nlohmann::json& section)
 
     if ("NVIDIA" != this->sectionType)
     {
-        std::cerr << std::format("Skipping {} section", this->sectionType) << std::endl;
+        std::cerr << std::format("Skipping {} section", this->sectionType)
+                  << std::endl;
         return;
     }
 
@@ -307,12 +316,10 @@ CPER::convertSectionNVIDIA(const nlohmann::json& section)
     {
         additionalData["NvSocket"] = nvSocket->dump();
     }
-
 }
 
 // ... CPER
-void
-CPER::prepareToLog()
+void CPER::prepareToLog()
 {
     const nlohmann::json& cper = this->jsonData;
     const auto hdr = cper.find("header");
@@ -355,7 +362,8 @@ CPER::prepareToLog()
         if (count < 1 || count > 255)
         {
             // Avoid parsing unexpectdly huge CPERs
-            std::cerr << std::format("Invalid CPER: Got sectionCount {}", count) << std::endl;
+            std::cerr << std::format("Invalid CPER: Got sectionCount {}", count)
+                      << std::endl;
             return;
         }
 
@@ -389,17 +397,16 @@ CPER::prepareToLog()
 }
 
 // utility
-size_t
-CPER::findWorst(const nlohmann::json& descs, const nlohmann::json& sections, size_t nelems) const
+size_t CPER::findWorst(const nlohmann::json& descs,
+                       const nlohmann::json& sections, size_t nelems) const
 {
     // 1=Fatal > 0=Recoverable > 2=Corrected > 3=Informational
-    static const int sevRank[] = { 1, 0, 2, 3 };
+    static const int sevRank[] = {1, 0, 2, 3};
 
     int ret = 0;
 
     // sections can have fewer elems but section-descriptors can't
-    if (!this->isValid ||
-        !descs.is_array() || descs.size() < nelems ||
+    if (!this->isValid || !descs.is_array() || descs.size() < nelems ||
         !sections.is_array())
     {
         std::cerr << "Invalid CPER: cannot parse arrays" << std::endl;
@@ -446,8 +453,7 @@ CPER::findWorst(const nlohmann::json& descs, const nlohmann::json& sections, siz
 
 // conversion
 // ... to dbus
-std::string
-CPER::toDbusSeverity(const std::string& severity) const
+std::string CPER::toDbusSeverity(const std::string& severity) const
 {
     if ("Recoverable" == severity)
         return "xyz.openbmc_project.Logging.Entry.Level.Warning";
@@ -462,8 +468,7 @@ CPER::toDbusSeverity(const std::string& severity) const
 }
 
 // .. to NVIDIA
-std::string
-CPER::toNvSeverity(int severity) const
+std::string CPER::toNvSeverity(int severity) const
 {
     if (0 == severity)
         return "Correctable";
@@ -476,8 +481,7 @@ CPER::toNvSeverity(int severity) const
 }
 
 // ... to hex
-std::string
-CPER::toHexString(int num, size_t width) const
+std::string CPER::toHexString(int num, size_t width) const
 {
     std::stringstream hexStr;
 
@@ -486,8 +490,7 @@ CPER::toHexString(int num, size_t width) const
 }
 
 // ... to base64
-std::string
-CPER::toBase64String(const std::vector<uint8_t>& data) const
+std::string CPER::toBase64String(const std::vector<uint8_t>& data) const
 {
     int encodedLen = data.size();
     char* enc = base64_encode(data.data(), data.size(), &encodedLen);
@@ -503,4 +506,3 @@ CPER::toBase64String(const std::vector<uint8_t>& data) const
 
     return encodedData;
 }
-
