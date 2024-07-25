@@ -1,4 +1,5 @@
 #include <boost/asio.hpp>
+#include <boost/beast/core/detail/base64.hpp>
 #include <sdbusplus/asio/connection.hpp>
 
 #include <fstream>
@@ -7,7 +8,6 @@
 extern "C"
 {
 #include <cper-parse.h>
-#include <libcper/base64.h>
 }
 
 #include "cper.hpp"
@@ -392,7 +392,10 @@ void CPER::prepareToLog()
         }
     }
 
-    additionalData["DiagnosticData"] = toBase64String(this->cperData);
+    if (!this->cperData.empty())
+    {
+        additionalData["DiagnosticData"] = toBase64String(this->cperData);
+    }
     additionalData["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
 }
 
@@ -401,7 +404,7 @@ size_t CPER::findWorst(const nlohmann::json& descs,
                        const nlohmann::json& sections, size_t nelems) const
 {
     // 1=Fatal > 0=Recoverable > 2=Corrected > 3=Informational
-    static const int sevRank[] = {1, 0, 2, 3};
+    static const std::array<int, 4> sevRank = {1, 0, 2, 3};
 
     int ret = 0;
 
@@ -425,22 +428,23 @@ size_t CPER::findWorst(const nlohmann::json& descs,
         if (0 == desc->value("sectionOffset", 0))
         {
             std::cerr << std::format("Invalid section[{}]", i) << std::endl;
-            continue;
         }
-
-        // get severity of current section-descriptor
-        int sev = 3;
-        const auto iter = desc->find("severity");
-        if (iter != desc->end())
+        else
         {
-            sev = iter->value("code", 3);
-        }
+            // get severity of current section-descriptor
+            int sev = 3;
+            const auto iter = desc->find("severity");
+            if (iter != desc->end())
+            {
+                sev = iter->value("code", 3);
+            }
 
-        // if initialized, lower rank is worse
-        if (worst < 0 || sevRank[sev] < sevRank[worst])
-        {
-            ret = i;
-            worst = sev;
+            // if initialized, lower rank is worse
+            if (worst < 0 || sevRank[sev] < sevRank[worst])
+            {
+                ret = i;
+                worst = sev;
+            }
         }
 
         ++i;
@@ -492,17 +496,13 @@ std::string CPER::toHexString(int num, size_t width) const
 // ... to base64
 std::string CPER::toBase64String(const std::vector<uint8_t>& data) const
 {
-    int encodedLen = data.size();
-    char* enc = base64_encode(data.data(), data.size(), &encodedLen);
+    // encoded_size() doesn't include \0
+    size_t len = boost::beast::detail::base64::encoded_size(data.size()) + 1;
+    std::string encoded(len, '\0');
 
-    if (nullptr == enc)
-    {
-        std::cerr << "Failed to encode" << std::endl;
-        return std::string();
-    }
+    size_t written = boost::beast::detail::base64::encode(
+        encoded.data(), data.data(), data.size());
+    encoded.resize(written);
 
-    std::string encodedData = enc;
-    free(enc);
-
-    return encodedData;
+    return encoded;
 }
