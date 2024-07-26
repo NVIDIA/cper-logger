@@ -80,12 +80,12 @@ configure_file(input: 'xyz.openbmc_project.CPERLogger.service',
 json_c_dep = dependency(
               'json-c',
               required: true,
-              fallback : ['json-c', 'json_c_dep'])
+              fallback : 'json_c')
 
 libcper_dep = dependency(
               'libcper',
               required: true,
-              fallback : ['libcper', 'libcper_dep'])
+              fallback : 'libcper')
 
 cper_logger_a = static_library(
     'cper_logger_a',

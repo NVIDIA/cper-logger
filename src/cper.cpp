@@ -161,12 +161,14 @@ void CPER::readPldmFile(const std::string& filename)
     {
         jobj = cper_single_section_to_ir(file);
     }
+    fclose(file);
 
     if (nullptr != jobj)
     {
         this->jsonData = nlohmann::json::parse(json_object_to_json_string(jobj),
                                                nullptr, false);
     }
+    json_object_put(jobj);
 }
 
 // convert to logging
