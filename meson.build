@@ -82,7 +82,7 @@ json_c_dep = dependency(
               required: true,
               fallback : 'json_c')
 
-libcper_dep = dependency(
+libcper_parse = dependency(
               'libcper',
               required: true,
               fallback : 'libcper')
@@ -91,8 +91,10 @@ cper_logger_a = static_library(
     'cper_logger_a',
     'src/cper.cpp',
     dependencies: [
-      libcper_dep,
+      boost,
       json_c_dep,
+      libcper_parse,
+      sdbusplus,
     ],
     include_directories: [
         'src',
@@ -105,7 +107,6 @@ executable(
     dependencies: [
       boost,
       sdbusplus,
-      libcper_dep,
     ],
     include_directories: [
         'src',
@@ -148,6 +149,7 @@ if get_option('tests').enabled()
       ],
       include_directories: [
           'src',
+          'test',
       ],
       link_with: [
           cper_logger_a,

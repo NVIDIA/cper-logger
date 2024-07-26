@@ -1,5 +1,5 @@
-#ifndef _CPER_HPP
-#define _CPER_HPP
+#ifndef CPER_HPP
+#define CPER_HPP
 
 #include <nlohmann/json.hpp>
 #include <sdbusplus/asio/connection.hpp>
@@ -15,7 +15,21 @@ class CPER
     CPER(const std::string& filename);
 
     // Log
-    void log(std::shared_ptr<sdbusplus::asio::connection>) const;
+    void log(const std::shared_ptr<sdbusplus::asio::connection>&) const;
+
+    // Get
+    bool isValid() const
+    {
+        return jsonValid;
+    }
+    const std::map<std::string, std::string>& getProperties() const
+    {
+        return additionalData;
+    }
+    const nlohmann::json& getJson() const
+    {
+        return jsonData;
+    }
 
   private:
 #ifdef CPER_LOGGER_DEBUG_TRACE
@@ -49,11 +63,12 @@ class CPER
     std::string cperPath;
 
     // from input
-    nlohmann::json jsonData;
     std::vector<uint8_t> cperData;
 
+    nlohmann::json jsonData;
+    bool jsonValid;
+
     // saved flags
-    int isValid;
     std::string cperSeverity;
     std::string sectionType;
 
@@ -61,4 +76,4 @@ class CPER
     std::map<std::string, std::string> additionalData;
 };
 
-#endif // _CPER_HPP
+#endif // CPER_HPP

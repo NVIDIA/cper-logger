@@ -26,12 +26,13 @@ CPER::CPER(const std::string& filename) : cperPath(filename)
         readJsonFile(filename);
     }
 #endif
-    this->isValid = !(this->jsonData.empty() || this->jsonData.is_discarded());
+    this->jsonValid =
+        !(this->jsonData.empty() || this->jsonData.is_discarded());
     prepareToLog();
 }
 
 // Log to sdbus
-void CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
+void CPER::log(const std::shared_ptr<sdbusplus::asio::connection>& conn) const
 {
     std::map<std::string, std::variant<std::string, uint64_t>> dumpData;
 
@@ -51,7 +52,7 @@ void CPER::log(std::shared_ptr<sdbusplus::asio::connection> conn) const
                    sdbusplus::message::message& msg) {
         if (ec)
         {
-            std::cerr << "Error " << msg.get_errno() << std::endl;
+            std::cout << "Error " << msg.get_errno() << std::endl;
         }
     };
 
@@ -91,7 +92,7 @@ void CPER::readJsonFile(const std::string& filename)
 
     if (!jsonFile.is_open())
     {
-        std::cerr << "Failed reading as json " << filename << std::endl;
+        std::cout << "Failed reading as json " << filename << std::endl;
         return;
     }
 
@@ -111,18 +112,21 @@ void CPER::readPldmFile(const std::string& filename)
 
     if (!cperFile.is_open())
     {
-        std::cerr << "Failed reading " << filename << std::endl;
+        std::cout << "Failed reading " << filename << std::endl;
         return;
     }
 
-    std::vector<uint8_t> pldmData((std::istreambuf_iterator<char>(cperFile)),
-                                  std::istreambuf_iterator<char>());
+    const std::streamsize pldmMaxSize = 64 << 10;
+    std::vector<uint8_t> pldmData(pldmMaxSize);
+
+    cperFile.read(reinterpret_cast<char*>(pldmData.data()), pldmMaxSize);
+    pldmData.resize(cperFile.gcount());
 
     // 1st 4 bytes are a PLDM header, and there needs to be at least 1
     // section-descriptor
     if (pldmData.size() < pldmHeaderSize + sectionDescriptorSize)
     {
-        std::cerr << std::format("Invalid CPER: Got {} bytes", pldmData.size())
+        std::cout << std::format("Invalid CPER: Got {} bytes", pldmData.size())
                   << std::endl;
         return;
     }
@@ -132,21 +136,20 @@ void CPER::readPldmFile(const std::string& filename)
 
     if (type > 1)
     {
-        std::cerr << std::format("Invalid CPER: Got format-type {}", type)
+        std::cout << std::format("Invalid CPER: Got format-type {}", type)
                   << std::endl;
         return;
     }
 
     if (pldmData.size() - pldmHeaderSize < len)
     {
-        std::cerr << std::format("Invalid CPER: Got length {}", len)
+        std::cout << std::format("Invalid CPER: Got length {}", len)
                   << std::endl;
         return;
     }
 
     // copy the CPER binary for encoding later
-    this->cperData.assign(pldmData.begin() + pldmHeaderSize,
-                          pldmData.begin() + len);
+    this->cperData.assign(pldmData.begin() + pldmHeaderSize, pldmData.end());
 
     // create a FILE* for libcper
     FILE* file = fmemopen(this->cperData.data(), len, "r");
@@ -175,9 +178,9 @@ void CPER::readPldmFile(const std::string& filename)
 // ... header
 void CPER::convertHeader(const nlohmann::json& header)
 {
-    if (!this->isValid)
+    if (!isValid())
     {
-        std::cerr << "Invalid CPER: flagged" << std::endl;
+        std::cout << "Invalid CPER: flagged" << std::endl;
         return;
     }
 
@@ -206,9 +209,9 @@ void CPER::convertHeader(const nlohmann::json& header)
 // .. sectionDescriptor
 void CPER::convertSectionDescriptor(const nlohmann::json& desc)
 {
-    if (!this->isValid)
+    if (!isValid())
     {
-        std::cerr << "Invalid CPER: flagged" << std::endl;
+        std::cout << "Invalid CPER: flagged" << std::endl;
         return;
     }
 
@@ -238,9 +241,9 @@ void CPER::convertSectionDescriptor(const nlohmann::json& desc)
 // .. section
 void CPER::convertSection(const nlohmann::json& section)
 {
-    if (!this->isValid)
+    if (!isValid())
     {
-        std::cerr << "Invalid CPER: flagged" << std::endl;
+        std::cout << "Invalid CPER: flagged" << std::endl;
         return;
     }
 
@@ -248,7 +251,8 @@ void CPER::convertSection(const nlohmann::json& section)
     {
         convertSectionNVIDIA(section);
     }
-    else if ("PCIe" == this->sectionType)
+
+    if ("PCIe" == this->sectionType)
     {
         convertSectionPCIe(section);
     }
@@ -257,15 +261,15 @@ void CPER::convertSection(const nlohmann::json& section)
 // ... PCIe section
 void CPER::convertSectionPCIe(const nlohmann::json& section)
 {
-    if (!this->isValid)
+    if (!isValid())
     {
-        std::cerr << "Invalid CPER: flagged" << std::endl;
+        std::cout << "Invalid CPER: flagged" << std::endl;
         return;
     }
 
     if ("PCIe" != this->sectionType)
     {
-        std::cerr << std::format("Skipping {} section", this->sectionType)
+        std::cout << std::format("Skipping {} section", this->sectionType)
                   << std::endl;
         return;
     }
@@ -297,15 +301,15 @@ void CPER::convertSectionPCIe(const nlohmann::json& section)
 // ... NVIDIA section
 void CPER::convertSectionNVIDIA(const nlohmann::json& section)
 {
-    if (!this->isValid)
+    if (!isValid())
     {
-        std::cerr << "Invalid CPER: flagged" << std::endl;
+        std::cout << "Invalid CPER: flagged" << std::endl;
         return;
     }
 
     if ("NVIDIA" != this->sectionType)
     {
-        std::cerr << std::format("Skipping {} section", this->sectionType)
+        std::cout << std::format("Skipping {} section", this->sectionType)
                   << std::endl;
         return;
     }
@@ -326,7 +330,7 @@ void CPER::prepareToLog()
     const nlohmann::json& cper = this->jsonData;
     const auto hdr = cper.find("header");
 
-    if (!this->isValid)
+    if (!isValid())
     {
         // unknown CPER - use some defaults
         additionalData["DiagnosticDataType"] = "CPER";
@@ -340,7 +344,7 @@ void CPER::prepareToLog()
         const auto desc = cper.find("sectionDescriptor");
         if (desc == cper.end())
         {
-            std::cerr << "Invalid CPER: No sectionDescriptor" << std::endl;
+            std::cout << "Invalid CPER: No sectionDescriptor" << std::endl;
             return;
         }
         convertSectionDescriptor(*desc);
@@ -348,7 +352,7 @@ void CPER::prepareToLog()
         const auto section = cper.find("section");
         if (section == cper.end())
         {
-            std::cerr << "Invalid CPER: No section" << std::endl;
+            std::cout << "Invalid CPER: No section" << std::endl;
             return;
         }
         convertSection(*section);
@@ -364,7 +368,7 @@ void CPER::prepareToLog()
         if (count < 1 || count > 255)
         {
             // Avoid parsing unexpectdly huge CPERs
-            std::cerr << std::format("Invalid CPER: Got sectionCount {}", count)
+            std::cout << std::format("Invalid CPER: Got sectionCount {}", count)
                       << std::endl;
             return;
         }
@@ -372,13 +376,13 @@ void CPER::prepareToLog()
         const auto descs = cper.find("sectionDescriptors");
         if (descs == cper.end())
         {
-            std::cerr << "Invalid CPER: No sectionDescriptors" << std::endl;
+            std::cout << "Invalid CPER: No sectionDescriptors" << std::endl;
             return;
         }
         const auto sections = cper.find("sections");
         if (sections == cper.end())
         {
-            std::cerr << "Invalid CPER: No sections" << std::endl;
+            std::cout << "Invalid CPER: No sections" << std::endl;
             return;
         }
 
@@ -411,10 +415,10 @@ size_t CPER::findWorst(const nlohmann::json& descs,
     int ret = 0;
 
     // sections can have fewer elems but section-descriptors can't
-    if (!this->isValid || !descs.is_array() || descs.size() < nelems ||
+    if (!isValid() || !descs.is_array() || descs.size() < nelems ||
         !sections.is_array())
     {
-        std::cerr << "Invalid CPER: cannot parse arrays" << std::endl;
+        std::cout << "Invalid CPER: cannot parse arrays" << std::endl;
         return ret;
     }
 
@@ -429,7 +433,7 @@ size_t CPER::findWorst(const nlohmann::json& descs,
         // drop section if not populated correctly
         if (0 == desc->value("sectionOffset", 0))
         {
-            std::cerr << std::format("Invalid section[{}]", i) << std::endl;
+            std::cout << std::format("Invalid section[{}]", i) << std::endl;
         }
         else
         {
@@ -462,28 +466,36 @@ size_t CPER::findWorst(const nlohmann::json& descs,
 std::string CPER::toDbusSeverity(const std::string& severity) const
 {
     if ("Recoverable" == severity)
+    {
         return "xyz.openbmc_project.Logging.Entry.Level.Warning";
-    else if ("Fatal" == severity)
+    }
+    if ("Fatal" == severity)
+    {
         return "xyz.openbmc_project.Logging.Entry.Level.Critical";
-    else if ("Corrected" == severity)
+    }
+    if ("Corrected" == severity || "Informational" == severity)
+    {
         return "xyz.openbmc_project.Logging.Entry.Level.Informational";
-    else if ("Informational" == severity)
-        return "xyz.openbmc_project.Logging.Entry.Level.Informational";
-    else
-        return "xyz.openbmc_project.Logging.Entry.Level.Warning";
+    }
+    return "xyz.openbmc_project.Logging.Entry.Level.Warning";
 }
 
 // .. to NVIDIA
 std::string CPER::toNvSeverity(int severity) const
 {
     if (0 == severity)
+    {
         return "Correctable";
-    else if (1 == severity)
+    }
+    if (1 == severity)
+    {
         return "Fatal";
-    else if (2 == severity)
+    }
+    if (2 == severity)
+    {
         return "Corrected";
-    else
-        return "None";
+    }
+    return "None";
 }
 
 // ... to hex
