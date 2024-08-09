@@ -32,7 +32,7 @@ class CPER
     CPER(const std::string& filename);
 
     // Log
-    void log(const std::shared_ptr<sdbusplus::asio::connection>&) const;
+    void log(sdbusplus::asio::connection&) const;
 
     // Get
     bool isValid() const
@@ -68,8 +68,9 @@ class CPER
     void convertSectionPCIe(const nlohmann::json& section);
     void convertSectionNVIDIA(const nlohmann::json& section);
 
-    size_t findWorst(const nlohmann::json& descs,
-                     const nlohmann::json& sections, size_t nelems) const;
+    size_t findWorst(const nlohmann::json::array_t& descs,
+                     const nlohmann::json::array_t& sections,
+                     size_t nelems) const;
 
     std::string toDbusSeverity(const std::string& severity) const;
     std::string toNvSeverity(int severity) const;

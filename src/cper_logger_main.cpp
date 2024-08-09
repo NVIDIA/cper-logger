@@ -27,7 +27,7 @@ void cperCreateLog(const std::string& cperPath)
 {
     CPER cp(cperPath);
 
-    cp.log(conn);
+    cp.log(*conn.get());
 }
 
 int main(void)

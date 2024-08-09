@@ -177,16 +177,10 @@ TEST(CPERTests, EmptyFile)
 
 TEST(CPERTests, HugeFile)
 {
-    CPER cp("/dev/urandom");
+    CPER cp("/dev/zero");
     ASSERT_FALSE(cp.isValid());
 
     auto prop = cp.getProperties();
     EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
     EXPECT_EQ(prop["CPERSeverity"], "Unknown");
-}
-
-int main()
-{
-    ::testing::InitGoogleTest();
-    return RUN_ALL_TESTS();
 }

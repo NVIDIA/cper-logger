@@ -62,6 +62,8 @@ add_project_arguments(
     language : 'cpp'
 )
 
+phosphor_logging = dependency('phosphor-logging')
+
 cxx = meson.get_compiler('cpp')
 
 systemd_system_unit_dir = systemd.get_variable(
@@ -82,7 +84,7 @@ json_c_dep = dependency(
               required: true,
               fallback : 'json_c')
 
-libcper_parse = dependency(
+libcper_parse_dep = dependency(
               'libcper',
               required: true,
               fallback : 'libcper')
@@ -93,7 +95,8 @@ cper_logger_a = static_library(
     dependencies: [
       boost,
       json_c_dep,
-      libcper_parse,
+      libcper_parse_dep,
+      phosphor_logging,
       sdbusplus,
     ],
     include_directories: [
