@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+#include "cper.hpp"
+
+#include <cper-parse-str.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast/core/detail/base64.hpp>
 #include <boost/beast/core/error.hpp>
@@ -30,11 +34,8 @@
 
 extern "C"
 {
-#include <cper-parse.h>
 #include <edk/Cper.h>
 }
-
-#include "cper.hpp"
 
 // Public functions
 
@@ -185,27 +186,19 @@ void CPER::readPldmFile(const std::string& filename)
     // copy the CPER binary for encoding later
     this->cperData.assign(pldmData.begin() + pldmHeaderSize, pldmData.end());
 
-    // create a FILE* for libcper
-    std::unique_ptr<std::FILE, int (*)(FILE*)> fp(
-        fmemopen(this->cperData.data(), len, "r"), fclose);
-    if (nullptr == fp)
-    {
-        lg2::error("Failed opening cper data");
-        return;
-    }
-
-    // parse to json_object* from libcper
-    std::unique_ptr<json_object, int (*)(json_object*)> jobj(
-        type ? cper_single_section_to_ir(fp.get()) : cper_to_ir(fp.get()),
-        json_object_put);
-    if (nullptr == jobj)
+    // parse to json as char* from libcper
+    std::unique_ptr<char, void (*)(void*)> jstr(
+        type ? cperbuf_single_section_to_str_ir(this->cperData.data(),
+                                                this->cperData.size())
+             : cperbuf_to_str_ir(this->cperData.data(), this->cperData.size()),
+        free);
+    if (nullptr == jstr)
     {
         lg2::error("Failed parsing cper data");
         return;
     }
 
-    this->jsonData = nlohmann::json::parse(
-        json_object_to_json_string(jobj.get()), nullptr, false);
+    this->jsonData = nlohmann::json::parse(jstr.get(), nullptr, false);
 }
 
 // convert to logging
