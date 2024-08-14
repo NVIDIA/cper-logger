@@ -62,6 +62,8 @@ add_project_arguments(
     language : 'cpp'
 )
 
+phosphor_logging = dependency('phosphor-logging')
+
 cxx = meson.get_compiler('cpp')
 
 systemd_system_unit_dir = systemd.get_variable(
@@ -77,10 +79,29 @@ configure_file(input: 'xyz.openbmc_project.CPERLogger.service',
                install_dir: systemd_system_unit_dir,
                install: true)
 
+json_c_dep = dependency(
+              'json-c',
+              required: true,
+              fallback : 'json_c')
+
+libcper_parse_dep = dependency(
+              'libcper',
+              required: true,
+              fallback : 'libcper')
+
 cper_logger_a = static_library(
     'cper_logger_a',
-    'src/cper_logger.cpp',
-    include_directories: 'include',
+    'src/cper.cpp',
+    dependencies: [
+      boost,
+      json_c_dep,
+      libcper_parse_dep,
+      phosphor_logging,
+      sdbusplus,
+    ],
+    include_directories: [
+        'src',
+    ],
 )
 
 executable(
@@ -90,7 +111,9 @@ executable(
       boost,
       sdbusplus,
     ],
-    include_directories: 'include',
+    include_directories: [
+        'src',
+    ],
     install: true,
     link_with: [
         cper_logger_a,
@@ -128,7 +151,8 @@ if get_option('tests').enabled()
           gtest_dep,
       ],
       include_directories: [
-          'include',
+          'src',
+          'test',
       ],
       link_with: [
           cper_logger_a,

@@ -1,0 +1,6 @@
+[wrap-git]
+url = https://github.com/json-c/json-c
+revision = HEAD
+
+[provide]
+json-c = json_c_dep
