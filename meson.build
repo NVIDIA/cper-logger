@@ -63,6 +63,10 @@ add_project_arguments(
 )
 
 phosphor_logging = dependency('phosphor-logging')
+nlohmann_json_dep = dependency(
+                'nlohmann_json',
+                version: '>=3.11.2',
+                include_type: 'system')
 
 cxx = meson.get_compiler('cpp')
 
@@ -90,6 +94,7 @@ cper_logger_a = static_library(
     dependencies: [
       boost,
       libcper_parse_dep,
+      nlohmann_json_dep,
       phosphor_logging,
       sdbusplus,
     ],
@@ -140,9 +145,10 @@ if get_option('tests').enabled()
       'test/cper_logger_test.cpp',
       dependencies: [
           boost,
-          sdbusplus,
           gmock_dep,
           gtest_dep,
+          nlohmann_json_dep,
+          sdbusplus,
       ],
       include_directories: [
           'src',
