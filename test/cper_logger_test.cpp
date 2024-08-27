@@ -28,6 +28,8 @@
 
 #include <gtest/gtest.h>
 
+static auto configFile = std::ifstream("cper-logger.json");
+
 std::string writeTempfile(const unsigned char* data, unsigned int size,
                           const std::string& basename)
 {
@@ -56,23 +58,80 @@ std::string writeTempfile(const unsigned char* data, unsigned int size,
     return fileName;
 }
 
+void parseOut(const properties& m, const nlohmann::json& array,
+              nlohmann::json& jFlat)
+{
+    for (const auto& item : array)
+    {
+        const auto& cf = item.find("from");
+        const auto& ct = item.find("to");
+        if (item.end() == cf || item.end() == ct)
+        {
+            continue;
+        }
+
+        const auto& f = m.find(*cf);
+        if (m.end() == f)
+        {
+            continue;
+        }
+
+        const auto& cj = item.find("json");
+        if (item.end() == cj || cj->get<bool>() == false)
+        {
+            jFlat[*ct] = f->second;
+            continue;
+        }
+
+        auto prefix = ct->dump();
+        prefix.erase(std::remove(prefix.begin(), prefix.end(), '\"'),
+                     prefix.end());
+
+        auto jj = nlohmann::ordered_json::parse(f->second);
+        for (auto& [key, value] : jj.items())
+        {
+            jFlat[prefix + key] = value;
+        }
+    }
+}
+
+auto redfishOutput(std::ifstream& configFile, const properties& m)
+{
+    auto jOut = nlohmann::json::parse(R"({ })");
+
+    configFile.seekg(0, std::ios::beg);
+    const auto& config = nlohmann::ordered_json::parse(configFile);
+
+    const auto& redfishConfig = config.find("redfishProperties");
+    if (config.end() != redfishConfig)
+    {
+        parseOut(m, *redfishConfig, jOut);
+    }
+
+    return jOut;
+}
+
 TEST(CPERTests, GoodParseCCPLEX)
 {
     const auto file =
         writeTempfile(nvidia_ccplex_good_cper, nvidia_ccplex_good_cper_len,
                       "nvidia-ccplex-good");
 
+    properties prop;
     CPER cp(file.c_str());
+    cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Corrected");
-    EXPECT_EQ(prop["SectionType"], "NVIDIA");
-    EXPECT_EQ(prop["SectionSeverity"], "Corrected");
-    EXPECT_EQ(prop["NvSignature"], "CCPLEXSCF");
-    EXPECT_EQ(prop["NvSeverity"], "Corrected");
-    EXPECT_EQ(prop["NvSocket"], "0");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    const auto& rf = redfishOutput(configFile, prop);
+    EXPECT_EQ(
+        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        "NVIDIA");
+    EXPECT_EQ(rf.at("/CPER/Oem/Nvidia/libcper/sections/0/signature"),
+              "CCPLEXSCF");
+    EXPECT_EQ(rf.at("/CPER/NotificationType"),
+              "09a9d5ac-5204-4214-96e594992e752bcd");
 }
 
 TEST(CPERTests, GoodParsePCIe)
@@ -80,14 +139,19 @@ TEST(CPERTests, GoodParsePCIe)
     const auto file =
         writeTempfile(pcie_good_cper, pcie_good_cper_len, "pcie-good");
 
+    properties prop;
     CPER cp(file.c_str());
+    cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Corrected");
-    EXPECT_EQ(prop["SectionType"], "PCIe");
-    EXPECT_EQ(prop["SectionSeverity"], "Corrected");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    const auto& rf = redfishOutput(configFile, prop);
+    EXPECT_EQ(
+        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        "PCIe");
+    EXPECT_EQ(rf.at("/CPER/NotificationType"),
+              "09a9d5ac-5204-4214-96e594992e752bcd");
 }
 
 TEST(CPERTests, FailParse)
@@ -96,13 +160,13 @@ TEST(CPERTests, FailParse)
         writeTempfile(nvidia_ccplex_bad_cper, nvidia_ccplex_bad_cper_len,
                       "nvidia-ccplex-bad");
 
+    properties prop;
     CPER cp(file.c_str());
+    cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Unknown");
-    EXPECT_EQ(prop["SectionType"], "");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, MultiSeverity)
@@ -111,17 +175,21 @@ TEST(CPERTests, MultiSeverity)
                                     nvidia_ccplex_multiseverity_cper_len,
                                     "nvidia-ccplex-multiseverity");
 
+    properties prop;
     CPER cp(file.c_str());
+    cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Corrected");
-    EXPECT_EQ(prop["SectionType"], "NVIDIA");
-    EXPECT_EQ(prop["SectionSeverity"], "Fatal");
-    EXPECT_EQ(prop["NvSignature"], "CCPLEXSCF");
-    EXPECT_EQ(prop["NvSeverity"], "Fatal");
-    EXPECT_EQ(prop["NvSocket"], "0");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    const auto& rf = redfishOutput(configFile, prop);
+    EXPECT_EQ(
+        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        "NVIDIA");
+    EXPECT_EQ(rf.at("/CPER/Oem/Nvidia/libcper/sections/0/signature"),
+              "CCPLEXSCF");
+    EXPECT_EQ(rf.at("/CPER/NotificationType"),
+              "09a9d5ac-5204-4214-96e594992e752bcd");
 }
 
 TEST(CPERTests, NullSection)
@@ -130,57 +198,64 @@ TEST(CPERTests, NullSection)
                                     nvidia_ccplex_nullsection_cper_len,
                                     "nvidia-ccplex-nullsection");
 
+    properties prop;
     CPER cp(file.c_str());
+    cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
     // This is a BUG with this CPER
-    EXPECT_EQ(prop["CPERSeverity"], "Corrected");
-    EXPECT_EQ(prop["SectionType"], "NVIDIA");
-    EXPECT_EQ(prop["SectionSeverity"], "Corrected");
-    EXPECT_EQ(prop["NvSignature"], "CCPLEXSCF");
-    EXPECT_EQ(prop["NvSeverity"], "Corrected");
-    EXPECT_EQ(prop["NvSocket"], "0");
+    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    const auto& rf = redfishOutput(configFile, prop);
+    EXPECT_EQ(
+        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        "NVIDIA");
+    EXPECT_EQ(rf.at("/CPER/Oem/Nvidia/libcper/sections/0/signature"),
+              "CCPLEXSCF");
+    EXPECT_EQ(rf.at("/CPER/NotificationType"),
+              "09a9d5ac-5204-4214-96e594992e752bcd");
 }
 
 TEST(CPERTests, MissingFile)
 {
+    properties prop;
     CPER cp("/tmp/made-up-name");
+    cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Unknown");
-    EXPECT_EQ(prop["SectionType"], "");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, NotAFile)
 {
+    properties prop;
     CPER cp("/tmp");
+    cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Unknown");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, EmptyFile)
 {
+    properties prop;
     CPER cp("/dev/null");
+    cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Unknown");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, HugeFile)
 {
+    properties prop;
     CPER cp("/dev/zero");
+    cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    auto prop = cp.getProperties();
-    EXPECT_EQ(prop["DiagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["CPERSeverity"], "Unknown");
+    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop["cperSeverity"], "Unknown");
 }

@@ -25,9 +25,11 @@ std::shared_ptr<sdbusplus::asio::connection> conn = nullptr;
 // CPER.Logging.CreateLog "s"
 void cperCreateLog(const std::string& cperPath)
 {
+    properties prop;
     CPER cp(cperPath);
 
-    cp.log(*conn.get());
+    cp.prepareToLog(prop);
+    cp.log(prop, *conn.get());
 }
 
 int main(void)

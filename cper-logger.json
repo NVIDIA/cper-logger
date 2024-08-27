@@ -1,0 +1,49 @@
+{
+  "redfishProperties": [
+    {
+      "from": "REDFISH_MESSAGE_ID",
+      "to": "/MessageId"
+    },
+    {
+      "from": "diagnosticData",
+      "to": "/DiagnosticData"
+    },
+    {
+      "from": "diagnosticDataType",
+      "to": "/DiagnosticDataType"
+    },
+    {
+      "from": "notificationType",
+      "to": "/CPER/NotificationType"
+    },
+    {
+      "from": "sectionType",
+      "to": "/CPER/SectionType"
+    },
+    {
+      "from": "jsonHeader",
+      "to": "/CPER/Oem/Nvidia/libcper/header",
+      "json": true
+    },
+    {
+      "from": "jsonSectionDescriptors",
+      "to": "/CPER/Oem/Nvidia/libcper/sectionDescriptors",
+      "json": true
+    },
+    {
+      "from": "jsonSections",
+      "to": "/CPER/Oem/Nvidia/libcper/sections",
+      "json": true
+    },
+    {
+      "from": "jsonSectionDescriptor",
+      "to": "/CPER/Oem/Nvidia/libcper/sectionDescriptor",
+      "json": true
+    },
+    {
+      "from": "jsonSection",
+      "to": "/CPER/Oem/Nvidia/libcper/section",
+      "json": true
+    }
+  ]
+}

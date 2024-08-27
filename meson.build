@@ -74,6 +74,10 @@ systemd_system_unit_dir = systemd.get_variable(
     pkgconfig: 'systemdsystemunitdir'
 )
 
+system_conf_dir = systemd.get_variable(
+    pkgconfig: 'sysconfdir'
+)
+
 systemd_unit_configuration = configuration_data()
 systemd_unit_configuration.set('INSTALL_PREFIX', get_option('prefix'))
 
@@ -81,6 +85,12 @@ configure_file(input: 'xyz.openbmc_project.CPERLogger.service',
                output: 'xyz.openbmc_project.CPERLogger.service',
                configuration: systemd_unit_configuration,
                install_dir: systemd_system_unit_dir,
+               install: true)
+
+configure_file(input: 'cper-logger.json',
+               output: 'cper-logger.json',
+               copy: true,
+               install_dir: system_conf_dir,
                install: true)
 
 libcper_parse_dep = dependency(

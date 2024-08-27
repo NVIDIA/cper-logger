@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-#ifndef CPER_HPP
-#define CPER_HPP
+#pragma once
 
 #include <nlohmann/json.hpp>
 #include <sdbusplus/asio/connection.hpp>
@@ -24,24 +23,25 @@
 #include <map>
 #include <string>
 
+using properties = std::map<std::string, std::string>;
+
 class CPER
 {
 
   public:
-    // Constructor from filename
+    // Constructor to create json from file
     CPER(const std::string& filename);
 
+    // Populate properties from json for logging
+    void prepareToLog(properties& m) const;
+
     // Log
-    void log(sdbusplus::asio::connection&) const;
+    void log(const properties&, sdbusplus::asio::connection&) const;
 
     // Get
     bool isValid() const
     {
         return jsonValid;
-    }
-    const std::map<std::string, std::string>& getProperties() const
-    {
-        return additionalData;
     }
     const nlohmann::json& getJson() const
     {
@@ -57,41 +57,18 @@ class CPER
     // Load from pldmd data
     void readPldmFile(const std::string& filename);
 
-    // Populate additionalData from json for logging
-    void prepareToLog();
-
     // helpers
-
-    void convertHeader(const nlohmann::json& header);
-    void convertSectionDescriptor(const nlohmann::json& desc);
-    void convertSection(const nlohmann::json& section);
-    void convertSectionPCIe(const nlohmann::json& section);
-    void convertSectionNVIDIA(const nlohmann::json& section);
-
-    size_t findWorst(const nlohmann::json::array_t& descs,
-                     const nlohmann::json::array_t& sections,
-                     size_t nelems) const;
-
     std::string toDbusSeverity(const std::string& severity) const;
-    std::string toNvSeverity(int severity) const;
-    std::string toHexString(int num, size_t width) const;
     std::string toBase64String(const std::vector<uint8_t>& data) const;
 
-    // input file
+    // input file (needed to fwd the notification)
     std::string cperPath;
 
-    // from input
+    // raw cper
     std::vector<uint8_t> cperData;
 
+    // cper json
     nlohmann::json jsonData;
     bool jsonValid;
 
-    // saved flags
-    std::string cperSeverity;
-    std::string sectionType;
-
-    // for output
-    std::map<std::string, std::string> additionalData;
-};
-
-#endif // CPER_HPP
+}; // class
