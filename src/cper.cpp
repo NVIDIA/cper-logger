@@ -73,26 +73,6 @@ void CPER::prepareToLog(properties& m) const
         // single-section CPER
         m["diagnosticDataType"] = "CPERSection";
 
-        // sectionDescriptor
-        const auto& desc = cper.find("sectionDescriptor");
-        if (cper.end() == desc)
-        {
-            lg2::error("Invalid CPER {1}", "1", this->cperPath);
-            return;
-        }
-        m["jsonSectionDescriptor"] = desc->flatten().dump();
-
-        // section
-        const auto& sec = cper.find("section");
-        if (cper.end() == sec)
-        {
-            lg2::error("Invalid CPER {1}", "1", this->cperPath);
-            return;
-        }
-        auto jStr = sec->flatten().dump();
-        jStr.erase(std::remove(jStr.begin(), jStr.end(), '='), jStr.end());
-        m["jsonSection"] = jStr;
-
         // sectionDescriptor has the CPER's severity & sectionType
         const auto& sev = flat.find("/sectionDescriptor/severity/name");
         const auto& type = flat.find("/sectionDescriptor/sectionType/data");
@@ -108,29 +88,6 @@ void CPER::prepareToLog(properties& m) const
     {
         // full CPER
         m["diagnosticDataType"] = "CPER";
-
-        // header
-        m["jsonHeader"] = header->flatten().dump();
-
-        // sectionDescriptors[]
-        const auto& desc = cper.find("sectionDescriptors");
-        if (cper.end() == desc)
-        {
-            lg2::error("Invalid CPER {1}", "1", this->cperPath);
-            return;
-        }
-        m["jsonSectionDescriptors"] = desc->flatten().dump();
-
-        // sections[]
-        const auto& sec = cper.find("sections");
-        if (cper.end() == sec)
-        {
-            lg2::error("Invalid CPER {1}", "1", this->cperPath);
-            return;
-        }
-        auto jStr = sec->flatten().dump();
-        jStr.erase(std::remove(jStr.begin(), jStr.end(), '='), jStr.end());
-        m["jsonSections"] = jStr;
 
         // header has the CPER's severity & notificationType
         const auto& sev = flat.find("/header/severity/name");
