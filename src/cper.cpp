@@ -60,7 +60,6 @@ void CPER::prepareToLog(properties& m) const
 {
     const nlohmann::json& cper = this->jsonData;
     const auto& header = cper.find("header");
-    const auto& flat = cper.flatten();
 
     if (!isValid())
     {
@@ -74,15 +73,23 @@ void CPER::prepareToLog(properties& m) const
         m["diagnosticDataType"] = "CPERSection";
 
         // sectionDescriptor has the CPER's severity & sectionType
-        const auto& sev = flat.find("/sectionDescriptor/severity/name");
-        const auto& type = flat.find("/sectionDescriptor/sectionType/data");
-        if (flat.end() == sev || flat.end() == type)
+        if ((!cper.value("/sectionDescriptor/severity/name"_json_pointer,
+                         nlohmann::json())
+                  .empty()) &&
+            (!cper.value("/sectionDescriptor/sectionType/data"_json_pointer,
+                         nlohmann::json())
+                  .empty()))
         {
-            lg2::error("Invalid single-section CPER {1}", "1", this->cperPath);
+            m["cperSeverity"] =
+                cper["/sectionDescriptor/severity/name"_json_pointer];
+            m["notificationType"] =
+                cper["/sectionDescriptor/sectionType/data"_json_pointer];
+        }
+        else
+        {
+            lg2::error("Invalid full CPER {1}", "1", this->cperPath);
             return;
         }
-        m["cperSeverity"] = *sev;
-        m["sectionType"] = *type;
     }
     else
     {
@@ -90,20 +97,26 @@ void CPER::prepareToLog(properties& m) const
         m["diagnosticDataType"] = "CPER";
 
         // header has the CPER's severity & notificationType
-        const auto& sev = flat.find("/header/severity/name");
-        const auto& type = flat.find("/header/notificationType/guid");
-        if (flat.end() == sev || flat.end() == type)
+        if ((!cper.value("/header/severity/name"_json_pointer, nlohmann::json())
+                  .empty()) &&
+            (!cper.value("/header/notificationType/guid"_json_pointer,
+                         nlohmann::json())
+                  .empty()))
+        {
+            m["cperSeverity"] = cper["/header/severity/name"_json_pointer];
+            m["notificationType"] =
+                cper["/header/notificationType/guid"_json_pointer];
+        }
+        else
         {
             lg2::error("Invalid full CPER {1}", "1", this->cperPath);
             return;
         }
-        m["cperSeverity"] = *sev;
-        m["notificationType"] = *type;
     }
 
     if (isValid())
     {
-        auto jStr = flat.dump();
+        auto jStr = cper.dump();
         jStr.erase(std::remove(jStr.begin(), jStr.end(), '='), jStr.end());
         m["jsonDiagnosticData"] = jStr;
     }

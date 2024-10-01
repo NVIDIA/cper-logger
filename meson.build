@@ -87,12 +87,6 @@ configure_file(input: 'xyz.openbmc_project.CPERLogger.service',
                install_dir: systemd_system_unit_dir,
                install: true)
 
-configure_file(input: 'cper-logger.json',
-               output: 'cper-logger.json',
-               copy: true,
-               install_dir: system_conf_dir,
-               install: true)
-
 libcper_parse_dep = dependency(
               'libcper',
               required: true,

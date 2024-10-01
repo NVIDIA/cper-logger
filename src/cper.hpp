@@ -22,6 +22,7 @@
 
 #include <map>
 #include <string>
+using namespace nlohmann::literals;
 
 using properties = std::map<std::string, std::string>;
 
