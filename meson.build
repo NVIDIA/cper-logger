@@ -31,17 +31,18 @@ if not boost.found()
     opt = cmake.subproject_options()
     opt.add_cmake_defines(
         {
-            'BOOST_INCLUDE_LIBRARIES': 'asio;callable_traits;container;headers',
+            'BOOST_INCLUDE_LIBRARIES': 'asio;beast;callable_traits;container;headers',
             'BUILD_SHARED_LIBS': 'OFF',
         },
     )
 
     boost = cmake.subproject('boost', required: true, options: opt)
     boost_asio = boost.dependency('boost_asio').as_system()
+    boost_beast = boost.dependency('boost_beast').as_system()
     boost_callable_traits = boost.dependency('boost_callable_traits').as_system()
     boost_container = boost.dependency('boost_container').as_system()
     boost_headers = boost.dependency('boost_headers').as_system()
-    boost = [boost_asio, boost_callable_traits, boost_container, boost_headers]
+    boost = [boost_asio, boost_callable_traits, boost_container, boost_headers, boost_beast]
 endif
 add_project_arguments(
     '-DBOOST_ASIO_DISABLE_THREADS',
