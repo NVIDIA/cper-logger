@@ -28,8 +28,6 @@
 
 #include <gtest/gtest.h>
 
-static auto configFile = std::ifstream("cper-logger.json");
-
 std::string writeTempfile(const unsigned char* data, unsigned int size,
                           const std::string& basename)
 {
@@ -59,7 +57,7 @@ std::string writeTempfile(const unsigned char* data, unsigned int size,
 }
 
 void parseOut(const properties& m, const nlohmann::json& array,
-              nlohmann::json& jFlat)
+              nlohmann::json::object_t& jFlat)
 {
     for (const auto& item : array)
     {
@@ -95,18 +93,16 @@ void parseOut(const properties& m, const nlohmann::json& array,
     }
 }
 
-auto redfishOutput(std::ifstream& configFile, const properties& m)
+nlohmann::json redfishOutput(const properties& m)
 {
-    auto jOut = nlohmann::json::parse(R"({ })");
+    nlohmann::json config =
+        R"({ "redfishProperties": [ { "from": "REDFISH_MESSAGE_ID", "to": "/MessageId" }, { "from": "diagnosticData", "to": "/DiagnosticData" }, { "from": "diagnosticDataType", "to": "/DiagnosticDataType" }, { "from": "notificationType", "to": "/CPER/NotificationType" }, { "from": "sectionType", "to": "/CPER/SectionType" }, { "from": "jsonDiagnosticData", "to": "/CPER/Oem/Nvidia", "json": true } ]})"_json;
 
-    configFile.seekg(0, std::ios::beg);
-    const auto& config = nlohmann::ordered_json::parse(configFile);
+    const auto redfishConfig = config.find("redfishProperties");
+    EXPECT_NE(redfishConfig, config.end());
 
-    const auto& redfishConfig = config.find("redfishProperties");
-    if (config.end() != redfishConfig)
-    {
-        parseOut(m, *redfishConfig, jOut);
-    }
+    nlohmann::json::object_t jOut;
+    parseOut(m, *redfishConfig, jOut);
 
     return jOut;
 }
@@ -124,14 +120,16 @@ TEST(CPERTests, GoodParseCCPLEX)
 
     EXPECT_EQ(prop["diagnosticDataType"], "CPER");
     EXPECT_EQ(prop["cperSeverity"], "Corrected");
-    const auto& rf = redfishOutput(configFile, prop);
+    nlohmann::json rf = redfishOutput(prop);
+    std::cout << rf << '\n';
+    // TODO BUG
     EXPECT_EQ(
-        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "NVIDIA");
-    EXPECT_EQ(rf.at("/CPER/Oem/Nvidia/libcper/sections/0/signature"),
+    EXPECT_EQ(rf["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
               "CCPLEXSCF");
-    EXPECT_EQ(rf.at("/CPER/NotificationType"),
-              "09a9d5ac-5204-4214-96e594992e752bcd");
+    EXPECT_EQ(rf["/CPER/NotificationType"],
+              "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
 
 TEST(CPERTests, GoodParsePCIe)
@@ -146,12 +144,12 @@ TEST(CPERTests, GoodParsePCIe)
 
     EXPECT_EQ(prop["diagnosticDataType"], "CPER");
     EXPECT_EQ(prop["cperSeverity"], "Corrected");
-    const auto& rf = redfishOutput(configFile, prop);
+    nlohmann::json rf = redfishOutput(prop);
     EXPECT_EQ(
-        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "PCIe");
-    EXPECT_EQ(rf.at("/CPER/NotificationType"),
-              "09a9d5ac-5204-4214-96e594992e752bcd");
+    EXPECT_EQ(rf["/CPER/NotificationType"],
+              "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
 
 TEST(CPERTests, FailParse)
@@ -182,14 +180,14 @@ TEST(CPERTests, MultiSeverity)
 
     EXPECT_EQ(prop["diagnosticDataType"], "CPER");
     EXPECT_EQ(prop["cperSeverity"], "Corrected");
-    const auto& rf = redfishOutput(configFile, prop);
+    nlohmann::json rf = redfishOutput(prop);
     EXPECT_EQ(
-        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "NVIDIA");
-    EXPECT_EQ(rf.at("/CPER/Oem/Nvidia/libcper/sections/0/signature"),
+    EXPECT_EQ(rf["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
               "CCPLEXSCF");
-    EXPECT_EQ(rf.at("/CPER/NotificationType"),
-              "09a9d5ac-5204-4214-96e594992e752bcd");
+    EXPECT_EQ(rf["/CPER/NotificationType"],
+              "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
 
 TEST(CPERTests, NullSection)
@@ -206,14 +204,14 @@ TEST(CPERTests, NullSection)
     EXPECT_EQ(prop["diagnosticDataType"], "CPER");
     // This is a BUG with this CPER
     EXPECT_EQ(prop["cperSeverity"], "Corrected");
-    const auto& rf = redfishOutput(configFile, prop);
+    nlohmann::json rf = redfishOutput(prop);
     EXPECT_EQ(
-        rf.at("/CPER/Oem/Nvidia/libcper/sectionDescriptors/0/sectionType/type"),
+        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "NVIDIA");
-    EXPECT_EQ(rf.at("/CPER/Oem/Nvidia/libcper/sections/0/signature"),
+    EXPECT_EQ(rf["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
               "CCPLEXSCF");
-    EXPECT_EQ(rf.at("/CPER/NotificationType"),
-              "09a9d5ac-5204-4214-96e594992e752bcd");
+    EXPECT_EQ(rf["/CPER/NotificationType"],
+              "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
 
 TEST(CPERTests, MissingFile)
