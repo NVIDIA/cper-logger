@@ -76,14 +76,18 @@ void CPER::prepareToLog(properties& m) const
         if ((!cper.value("/sectionDescriptor/severity/name"_json_pointer,
                          nlohmann::json())
                   .empty()) &&
+            (!cper.value("/sectionDescriptor/severity/code"_json_pointer,
+                         nlohmann::json())
+                  .empty()) &&
             (!cper.value("/sectionDescriptor/sectionType/data"_json_pointer,
                          nlohmann::json())
                   .empty()))
         {
-            m["cperSeverity"] =
-                cper["/sectionDescriptor/severity/name"_json_pointer];
+            m["cperSeverity"] = cper["sectionDescriptor"]["severity"]["name"];
+            m["cperSeverityCode"] =
+                to_string(cper["sectionDescriptor"]["severity"]["code"]);
             m["notificationType"] =
-                cper["/sectionDescriptor/sectionType/data"_json_pointer];
+                cper["sectionDescriptor"]["sectionType"]["data"];
         }
         else
         {
@@ -99,13 +103,16 @@ void CPER::prepareToLog(properties& m) const
         // header has the CPER's severity & notificationType
         if ((!cper.value("/header/severity/name"_json_pointer, nlohmann::json())
                   .empty()) &&
+            (!cper.value("/header/severity/code"_json_pointer, nlohmann::json())
+                  .empty()) &&
             (!cper.value("/header/notificationType/guid"_json_pointer,
                          nlohmann::json())
                   .empty()))
         {
-            m["cperSeverity"] = cper["/header/severity/name"_json_pointer];
-            m["notificationType"] =
-                cper["/header/notificationType/guid"_json_pointer];
+            m["cperSeverity"] = cper["header"]["severity"]["name"];
+            m["cperSeverityCode"] =
+                to_string(cper["header"]["severity"]["code"]);
+            m["notificationType"] = cper["header"]["notificationType"]["guid"];
         }
         else
         {
