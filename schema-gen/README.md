@@ -8,11 +8,17 @@ Clone libcper to your local system: `https://github.com/openbmc/libcper.git`
 
 ### Step 2:
 
+Run the cmdline tool to convert JSON refs to XML schema suitable for redfish:
+`python3 schemagen.py convert -s cper-json.json -d ../libcper/specification/json/ -a sections`
+
+### Optional:
+
+#### Creating a master json schema from all $refs and converting the master json to XML
+#### can be done in separate steps
+
 Generate master-schema.json, which consolidates all .json files in the libcper
 repo
 `python3 schemagen.py json_master -s cper-json.json -d ../libcper/specification/json/`
-
-### Step 3:
 
 Convert the master json schema to an XML schema compatible with redfish
 `python3 schemagen.py json_to_xml -s master-schema.json -a sections`

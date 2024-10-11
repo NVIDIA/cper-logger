@@ -410,7 +410,6 @@ class JsontoXml:
                     else:
                         entity_names.append(name)
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -426,14 +425,32 @@ if __name__ == "__main__":
         help="Select this option to convert an assortment of json schemas into a single schema by using the $ref variable.",
     )
     parser_b = subparsers.add_parser(
-        "json_to_xml", help="Create an XML schema out of a json schema"
+        "json_to_xml", help="Create an XML schema out of a json schema (containing no $ref)"
+    )
+
+    parser_c = subparsers.add_parser(
+        "convert", help="Create an XML schema out of a json schema (might contain $ref)"
     )
 
     parser_a.add_argument("-v", "--verbose", action="store_true")
     parser_a.add_argument(
         "-s", "--schema", nargs=1, help="Input json schema", required=True
     )
+
+    parser_c.add_argument("-v", "--verbose", action="store_true")
+    parser_c.add_argument(
+        "-s", "--schema", nargs=1, help="Input json schema", required=True
+    )
+
     parser_a.add_argument(
+        "-d",
+        "--schemadir",
+        nargs=1,
+        help="Root location of json schema directory",
+        required=True,
+    )
+
+    parser_c.add_argument(
         "-d",
         "--schemadir",
         nargs=1,
@@ -451,12 +468,28 @@ if __name__ == "__main__":
         nargs=1,
         help="Basetype for all elements to inherit",
     )
+
     parser_b.add_argument(
         "-a",
         "--argstart",
         nargs=1,
         help="Property of json schema to start parsing from",
     )
+
+    parser_c.add_argument(
+        "-a",
+        "--argstart",
+        nargs=1,
+        help="Property of json schema to start parsing from",
+    )
+
+    parser_c.add_argument(
+        "-p",
+        "--parent-basetype",
+        nargs=1,
+        help="Basetype for all elements to inherit",
+    )
+
     parser_b.add_argument("-x", "--header", nargs=1, help="XML header")
     parser_b.add_argument("-f", "--footer", nargs=1, help="XML footer")
     parser_b.add_argument(
@@ -467,6 +500,15 @@ if __name__ == "__main__":
     )
     parser_b.add_argument(
         "-z", "--validate", help="Validate XML", action="store_true"
+    )
+    parser_c.add_argument(
+        "-z", "--validate", help="Validate XML", action="store_true"
+    )
+    parser_c.add_argument(
+        "-r",
+        "--required",
+        help="Only consider required fields",
+        action="store_true",
     )
 
     args = parser.parse_args()
@@ -533,6 +575,51 @@ if __name__ == "__main__":
         output = xml_obj.schema_parser(schema)
 
         out_file = "master-schema.xml"
+        print("Output filename: ", out_file)
+        with open(out_file, "w") as f:
+            print(output, file=f)
+    
+    elif args.subparser_name == "convert":
+        print("Creating master json")
+        # Master JSON Schema creation
+        json_schema_directory = args.schemadir[0]
+
+        schema = SchemaGenerator(json_schema_directory, args.schema[0])
+
+        base = schema.base_schema
+        master_schema = schema.replace_refs(base)
+
+        print("Creating json-schema -> xml")
+
+        if args.parent_basetype:
+            parent_basetype = args.parent_basetype[0]
+        else:
+            parent_basetype = "Nvidia"
+
+        if args.argstart:
+            argstart = args.argstart[0]
+        else:
+            argstart = "sections"
+
+        print("parent_basetype is: ", parent_basetype)
+        print("required is: ", args.required)
+
+        # #JSON to XML conversion
+        xml_obj = JsontoXml(
+            debug=args.verbose,
+            parent_basetype=parent_basetype,
+            required=args.required,
+            start_property=argstart,
+        )
+
+        if args.validate:
+            xml_obj.validate_xml(master_schema)
+            exit(0)
+
+        output = xml_obj.schema_parser(master_schema)
+
+        out_file = "master-schema.xml"
+        print("Saving output to master-schema.xml")
         print("Output filename: ", out_file)
         with open(out_file, "w") as f:
             print(output, file=f)
