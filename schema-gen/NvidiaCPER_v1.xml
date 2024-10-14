@@ -8,9 +8,10 @@
     <edmx:Include Namespace="RedfishExtensions.v1_0_0" Alias="Redfish"/>
   </edmx:Reference>
   <edmx:DataServices>
-    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="Nvidia.v1_0_0">
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER"> </Schema>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER.v1_0_0">
 
-      <EntityType Name="GenericProcessorGenericProcessorValidationBits">
+      <ComplexType Name="GenericProcessorGenericProcessorValidationBits">
           <Property Name="ProcessorTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="ProcessorISAValid" Type="Edm.Boolean"></Property>
           <Property Name="ProcessorErrorTypeValid" Type="Edm.Boolean"></Property>
@@ -24,42 +25,42 @@
           <Property Name="RequestorIDValid" Type="Edm.Boolean"></Property>
           <Property Name="ResponderIDValid" Type="Edm.Boolean"></Property>
           <Property Name="InstructionIPValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessorGenericProcessorProcessorType">
+      <ComplexType Name="GenericProcessorGenericProcessorProcessorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessorGenericProcessorProcessorISA">
+      <ComplexType Name="GenericProcessorGenericProcessorProcessorISA">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessorGenericProcessorErrorType">
+      <ComplexType Name="GenericProcessorGenericProcessorErrorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessorGenericProcessorOperation">
+      <ComplexType Name="GenericProcessorGenericProcessorOperation">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessorGenericProcessorFlags">
+      <ComplexType Name="GenericProcessorGenericProcessorFlags">
           <Property Name="Restartable" Type="Edm.Boolean"></Property>
           <Property Name="PreciseIP" Type="Edm.Boolean"></Property>
           <Property Name="Overflow" Type="Edm.Boolean"></Property>
           <Property Name="Corrected" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessorGenericProcessor">
-          <Property Name="ValidationBits" Type="Nvidia.GenericProcessorGenericProcessorValidationBits"></Property>
-          <Property Name="ProcessorType" Type="Nvidia.GenericProcessorGenericProcessorProcessorType"></Property>
-          <Property Name="ProcessorISA" Type="Nvidia.GenericProcessorGenericProcessorProcessorISA"></Property>
-          <Property Name="ErrorType" Type="Nvidia.GenericProcessorGenericProcessorErrorType"></Property>
-          <Property Name="Operation" Type="Nvidia.GenericProcessorGenericProcessorOperation"></Property>
-          <Property Name="Flags" Type="Nvidia.GenericProcessorGenericProcessorFlags"></Property>
+      <ComplexType Name="GenericProcessorGenericProcessor">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessorValidationBits"></Property>
+          <Property Name="ProcessorType" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessorProcessorType"></Property>
+          <Property Name="ProcessorISA" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessorProcessorISA"></Property>
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessorErrorType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessorOperation"></Property>
+          <Property Name="Flags" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessorFlags"></Property>
           <Property Name="Level" Type="Edm.Int64"></Property>
           <Property Name="CpuVersionInfo" Type="Edm.Int64"></Property>
           <Property Name="CpuBrandString" Type="Edm.String"></Property>
@@ -68,40 +69,40 @@
           <Property Name="RequestorID" Type="Edm.Int64"></Property>
           <Property Name="ResponderID" Type="Edm.Int64"></Property>
           <Property Name="InstructionIP" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericProcessor">
-          <Property Name="GenericProcessor" Type="Nvidia.GenericProcessorGenericProcessor"></Property>
-      </EntityType>
+      <ComplexType Name="GenericProcessor">
+          <Property Name="GenericProcessor" Type="NvidiaCPER.v1_0_0.GenericProcessorGenericProcessor"></Property>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorValidationBits">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorValidationBits">
           <Property Name="LocalAPICIDValid" Type="Edm.Boolean"></Property>
           <Property Name="CpuIDInfoValid" Type="Edm.Boolean"></Property>
           <Property Name="ProcessorErrorInfoNum" Type="Edm.Int64"></Property>
           <Property Name="ProcessorContextInfoNum" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorCpuidInfo">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorCpuidInfo">
           <Property Name="Eax" Type="Edm.Int64"></Property>
           <Property Name="Ebx" Type="Edm.Int64"></Property>
           <Property Name="Ecx" Type="Edm.Int64"></Property>
           <Property Name="Edx" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorType">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorType">
           <Property Name="Guid" Type="Edm.String"></Property>
           <Property Name="Name" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoValidationBits">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoValidationBits">
           <Property Name="CheckInfoValid" Type="Edm.Boolean"></Property>
           <Property Name="TargetAddressIDValid" Type="Edm.Boolean"></Property>
           <Property Name="RequestorIDValid" Type="Edm.Boolean"></Property>
           <Property Name="ResponderIDValid" Type="Edm.Boolean"></Property>
           <Property Name="InstructionPointerValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo0Checkinfo0ValidationBits">
+      <ComplexType Name="Checkinfo0Checkinfo0ValidationBits">
           <Property Name="TransactionTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="OperationValid" Type="Edm.Boolean"></Property>
           <Property Name="LevelValid" Type="Edm.Boolean"></Property>
@@ -110,31 +111,31 @@
           <Property Name="PreciseIPValid" Type="Edm.Boolean"></Property>
           <Property Name="RestartableIPValid" Type="Edm.Boolean"></Property>
           <Property Name="OverflowValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo0Checkinfo0TransactionType">
+      <ComplexType Name="Checkinfo0Checkinfo0TransactionType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo0Checkinfo0Operation">
+      <ComplexType Name="Checkinfo0Checkinfo0Operation">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo0">
-          <Property Name="ValidationBits" Type="Nvidia.Checkinfo0Checkinfo0ValidationBits"></Property>
-          <Property Name="TransactionType" Type="Nvidia.Checkinfo0Checkinfo0TransactionType"></Property>
-          <Property Name="Operation" Type="Nvidia.Checkinfo0Checkinfo0Operation"></Property>
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo0">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.Checkinfo0Checkinfo0ValidationBits"></Property>
+          <Property Name="TransactionType" Type="NvidiaCPER.v1_0_0.Checkinfo0Checkinfo0TransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v1_0_0.Checkinfo0Checkinfo0Operation"></Property>
           <Property Name="Level" Type="Edm.Int64"></Property>
           <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
           <Property Name="Uncorrected" Type="Edm.Boolean"></Property>
           <Property Name="PreciseIP" Type="Edm.Boolean"></Property>
           <Property Name="RestartableIP" Type="Edm.Boolean"></Property>
           <Property Name="Overflow" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo1Checkinfo1ValidationBits">
+      <ComplexType Name="Checkinfo1Checkinfo1ValidationBits">
           <Property Name="TransactionTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="OperationValid" Type="Edm.Boolean"></Property>
           <Property Name="LevelValid" Type="Edm.Boolean"></Property>
@@ -146,64 +147,64 @@
           <Property Name="ParticipationTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="TimedOutValid" Type="Edm.Boolean"></Property>
           <Property Name="AddressSpaceValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo1Checkinfo1TransactionType">
+      <ComplexType Name="Checkinfo1Checkinfo1TransactionType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo1Checkinfo1Operation">
+      <ComplexType Name="Checkinfo1Checkinfo1Operation">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo1Checkinfo1ParticipationType">
+      <ComplexType Name="Checkinfo1Checkinfo1ParticipationType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Checkinfo1Checkinfo1AddressSpace">
+      <ComplexType Name="Checkinfo1Checkinfo1AddressSpace">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo1">
-          <Property Name="ValidationBits" Type="Nvidia.Checkinfo1Checkinfo1ValidationBits"></Property>
-          <Property Name="TransactionType" Type="Nvidia.Checkinfo1Checkinfo1TransactionType"></Property>
-          <Property Name="Operation" Type="Nvidia.Checkinfo1Checkinfo1Operation"></Property>
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo1">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.Checkinfo1Checkinfo1ValidationBits"></Property>
+          <Property Name="TransactionType" Type="NvidiaCPER.v1_0_0.Checkinfo1Checkinfo1TransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v1_0_0.Checkinfo1Checkinfo1Operation"></Property>
           <Property Name="Level" Type="Edm.Int64"></Property>
           <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
           <Property Name="Uncorrected" Type="Edm.Boolean"></Property>
           <Property Name="PreciseIP" Type="Edm.Boolean"></Property>
           <Property Name="RestartableIP" Type="Edm.Boolean"></Property>
           <Property Name="Overflow" Type="Edm.Boolean"></Property>
-          <Property Name="ParticipationType" Type="Nvidia.Checkinfo1Checkinfo1ParticipationType"></Property>
-          <Property Name="AddressSpace" Type="Nvidia.Checkinfo1Checkinfo1AddressSpace"></Property>
+          <Property Name="ParticipationType" Type="NvidiaCPER.v1_0_0.Checkinfo1Checkinfo1ParticipationType"></Property>
+          <Property Name="AddressSpace" Type="NvidiaCPER.v1_0_0.Checkinfo1Checkinfo1AddressSpace"></Property>
           <Property Name="TimedOut" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckInfo">
-          <Property Name="Checkinfo0" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo0"></Property>
-          <Property Name="Checkinfo1" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo1"></Property>
-      </EntityType>
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckInfo">
+          <Property Name="Checkinfo0" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo0"></Property>
+          <Property Name="Checkinfo1" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckinfo1"></Property>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorProcessorErrorInfo">
-          <Property Name="Type" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorType"></Property>
-          <Property Name="ValidationBits" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoValidationBits"></Property>
-          <Property Name="CheckInfo" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckInfo"></Property>
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorProcessorErrorInfo">
+          <Property Name="Type" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorType"></Property>
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoValidationBits"></Property>
+          <Property Name="CheckInfo" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorprocessorErrorInfoCheckInfo"></Property>
           <Property Name="TargetAddressID" Type="Edm.Int64"></Property>
           <Property Name="RequestorID" Type="Edm.Int64"></Property>
           <Property Name="ResponderID" Type="Edm.Int64"></Property>
           <Property Name="InstructionPointer" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorRegisterContextType">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorRegisterContextType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorRegisterarray0">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorRegisterarray0">
           <Property Name="Eax" Type="Edm.Int64"></Property>
           <Property Name="Ebx" Type="Edm.Int64"></Property>
           <Property Name="Ecx" Type="Edm.Int64"></Property>
@@ -229,9 +230,9 @@
           <Property Name="Idtr" Type="Edm.Int64"></Property>
           <Property Name="Ldtr" Type="Edm.Int64"></Property>
           <Property Name="Tr" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorRegisterarray1">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorRegisterarray1">
           <Property Name="Rax" Type="Edm.Int64"></Property>
           <Property Name="Rbx" Type="Edm.Int64"></Property>
           <Property Name="Rcx" Type="Edm.Int64"></Property>
@@ -268,76 +269,76 @@
           <Property Name="Idtr_1" Type="Edm.Int64"></Property>
           <Property Name="Ldtr" Type="Edm.Int64"></Property>
           <Property Name="Tr" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorRegisterarray2">
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorRegisterarray2">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorRegisterArray">
-          <Property Name="Registerarray0" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorRegisterarray0"></Property>
-          <Property Name="Registerarray1" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorRegisterarray1"></Property>
-          <Property Name="Registerarray2" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorRegisterarray2"></Property>
-      </EntityType>
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorRegisterArray">
+          <Property Name="Registerarray0" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorRegisterarray0"></Property>
+          <Property Name="Registerarray1" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorRegisterarray1"></Property>
+          <Property Name="Registerarray2" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorRegisterarray2"></Property>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64ProcessorProcessorContextInfo">
-          <Property Name="RegisterContextType" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorRegisterContextType"></Property>
+      <ComplexType Name="Ia32X64ProcessorIa32x64ProcessorProcessorContextInfo">
+          <Property Name="RegisterContextType" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorRegisterContextType"></Property>
           <Property Name="RegisterArraySize" Type="Edm.Int64"></Property>
           <Property Name="MsrAddress" Type="Edm.Int64"></Property>
           <Property Name="MmRegisterAddress" Type="Edm.Int64"></Property>
-          <Property Name="RegisterArray" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorRegisterArray"></Property>
-      </EntityType>
+          <Property Name="RegisterArray" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorRegisterArray"></Property>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64ProcessorIa32x64Processor">
-          <Property Name="ValidationBits" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorValidationBits"></Property>
+      <ComplexType Name="Ia32X64ProcessorIa32x64Processor">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorValidationBits"></Property>
           <Property Name="LocalAPICID" Type="Edm.Int64"></Property>
-          <Property Name="CpuidInfo" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorCpuidInfo"></Property>
-          <Property Name="ProcessorErrorInfo" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorProcessorErrorInfo"></Property>
-          <Property Name="ProcessorContextInfo" Type="Nvidia.Ia32X64ProcessorIa32x64ProcessorProcessorContextInfo"></Property>
-      </EntityType>
+          <Property Name="CpuidInfo" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorCpuidInfo"></Property>
+          <Property Name="ProcessorErrorInfo" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorProcessorErrorInfo"></Property>
+          <Property Name="ProcessorContextInfo" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64ProcessorProcessorContextInfo"></Property>
+      </ComplexType>
 
-      <EntityType Name="Ia32X64Processor">
-          <Property Name="Ia32x64Processor" Type="Nvidia.Ia32X64ProcessorIa32x64Processor"></Property>
-      </EntityType>
+      <ComplexType Name="Ia32X64Processor">
+          <Property Name="Ia32x64Processor" Type="NvidiaCPER.v1_0_0.Ia32X64ProcessorIa32x64Processor"></Property>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorValidationBits">
+      <ComplexType Name="ArmProcessorArmProcessorValidationBits">
           <Property Name="MpidrValid" Type="Edm.Boolean"></Property>
           <Property Name="ErrorAffinityLevelValid" Type="Edm.Boolean"></Property>
           <Property Name="RunningStateValid" Type="Edm.Boolean"></Property>
           <Property Name="VendorSpecificInfoValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorErrorAffinity">
+      <ComplexType Name="ArmProcessorArmProcessorErrorAffinity">
           <Property Name="Value" Type="Edm.Int64"></Property>
           <Property Name="Type" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoValidationBits">
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoValidationBits">
           <Property Name="MultipleErrorValid" Type="Edm.Boolean"></Property>
           <Property Name="FlagsValid" Type="Edm.Boolean"></Property>
           <Property Name="ErrorInformationValid" Type="Edm.Boolean"></Property>
           <Property Name="VirtualFaultAddressValid" Type="Edm.Boolean"></Property>
           <Property Name="PhysicalFaultAddressValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoErrorType">
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoErrorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoMultipleError">
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoMultipleError">
           <Property Name="Type" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoFlags">
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoFlags">
           <Property Name="FirstErrorCaptured" Type="Edm.Boolean"></Property>
           <Property Name="LastErrorCaptured" Type="Edm.Boolean"></Property>
           <Property Name="Propagated" Type="Edm.Boolean"></Property>
           <Property Name="Overflow" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CacheerrorcacheErrorValidationBits">
+      <ComplexType Name="CacheerrorcacheErrorValidationBits">
           <Property Name="TransactionTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="OperationValid" Type="Edm.Boolean"></Property>
           <Property Name="LevelValid" Type="Edm.Boolean"></Property>
@@ -345,34 +346,34 @@
           <Property Name="CorrectedValid" Type="Edm.Boolean"></Property>
           <Property Name="PrecisePCValid" Type="Edm.Boolean"></Property>
           <Property Name="RestartablePCValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CacheerrorcacheErrorTransactionType">
+      <ComplexType Name="CacheerrorcacheErrorTransactionType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CacheerrorcacheErrorOperation">
+      <ComplexType Name="CacheerrorcacheErrorOperation">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CacheerrorCacheError">
-          <Property Name="ValidationBits" Type="Nvidia.CacheerrorcacheErrorValidationBits"></Property>
-          <Property Name="TransactionType" Type="Nvidia.CacheerrorcacheErrorTransactionType"></Property>
-          <Property Name="Operation" Type="Nvidia.CacheerrorcacheErrorOperation"></Property>
+      <ComplexType Name="CacheerrorCacheError">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.CacheerrorcacheErrorValidationBits"></Property>
+          <Property Name="TransactionType" Type="NvidiaCPER.v1_0_0.CacheerrorcacheErrorTransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v1_0_0.CacheerrorcacheErrorOperation"></Property>
           <Property Name="Level" Type="Edm.Int64"></Property>
           <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
           <Property Name="Corrected" Type="Edm.Boolean"></Property>
           <Property Name="PrecisePC" Type="Edm.Boolean"></Property>
           <Property Name="RestartablePC" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoCacheerror">
-          <Property Name="CacheError" Type="Nvidia.CacheerrorCacheError"></Property>
-      </EntityType>
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoCacheerror">
+          <Property Name="CacheError" Type="NvidiaCPER.v1_0_0.CacheerrorCacheError"></Property>
+      </ComplexType>
 
-      <EntityType Name="TlberrortlbErrorValidationBits">
+      <ComplexType Name="TlberrortlbErrorValidationBits">
           <Property Name="TransactionTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="OperationValid" Type="Edm.Boolean"></Property>
           <Property Name="LevelValid" Type="Edm.Boolean"></Property>
@@ -385,76 +386,76 @@
           <Property Name="AddressSpaceValid" Type="Edm.Boolean"></Property>
           <Property Name="MemoryAttributesValid" Type="Edm.Boolean"></Property>
           <Property Name="AccessModeValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="TlberrortlbErrorTransactionType">
+      <ComplexType Name="TlberrortlbErrorTransactionType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="TlberrortlbErrorOperation">
+      <ComplexType Name="TlberrortlbErrorOperation">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="TlberrortlbErrorParticipationType">
+      <ComplexType Name="TlberrortlbErrorParticipationType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="TlberrortlbErrorAddressSpace">
+      <ComplexType Name="TlberrortlbErrorAddressSpace">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="TlberrortlbErrorAccessMode">
+      <ComplexType Name="TlberrortlbErrorAccessMode">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="TlberrorTlbError">
-          <Property Name="ValidationBits" Type="Nvidia.TlberrortlbErrorValidationBits"></Property>
-          <Property Name="TransactionType" Type="Nvidia.TlberrortlbErrorTransactionType"></Property>
-          <Property Name="Operation" Type="Nvidia.TlberrortlbErrorOperation"></Property>
+      <ComplexType Name="TlberrorTlbError">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.TlberrortlbErrorValidationBits"></Property>
+          <Property Name="TransactionType" Type="NvidiaCPER.v1_0_0.TlberrortlbErrorTransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v1_0_0.TlberrortlbErrorOperation"></Property>
           <Property Name="Level" Type="Edm.Int64"></Property>
           <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
           <Property Name="Corrected" Type="Edm.Boolean"></Property>
           <Property Name="PrecisePC" Type="Edm.Boolean"></Property>
           <Property Name="RestartablePC" Type="Edm.Boolean"></Property>
           <Property Name="TimedOut" Type="Edm.Boolean"></Property>
-          <Property Name="ParticipationType" Type="Nvidia.TlberrortlbErrorParticipationType"></Property>
-          <Property Name="AddressSpace" Type="Nvidia.TlberrortlbErrorAddressSpace"></Property>
-          <Property Name="AccessMode" Type="Nvidia.TlberrortlbErrorAccessMode"></Property>
+          <Property Name="ParticipationType" Type="NvidiaCPER.v1_0_0.TlberrortlbErrorParticipationType"></Property>
+          <Property Name="AddressSpace" Type="NvidiaCPER.v1_0_0.TlberrortlbErrorAddressSpace"></Property>
+          <Property Name="AccessMode" Type="NvidiaCPER.v1_0_0.TlberrortlbErrorAccessMode"></Property>
           <Property Name="MemoryAttributes" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoTlberror">
-          <Property Name="TlbError" Type="Nvidia.TlberrorTlbError"></Property>
-      </EntityType>
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoTlberror">
+          <Property Name="TlbError" Type="NvidiaCPER.v1_0_0.TlberrorTlbError"></Property>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorerrorInfoErrorInformation">
-          <Property Name="Cacheerror" Type="Nvidia.ArmProcessorArmProcessorerrorInfoCacheerror"></Property>
-          <Property Name="Tlberror" Type="Nvidia.ArmProcessorArmProcessorerrorInfoTlberror"></Property>
-      </EntityType>
+      <ComplexType Name="ArmProcessorArmProcessorerrorInfoErrorInformation">
+          <Property Name="Cacheerror" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoCacheerror"></Property>
+          <Property Name="Tlberror" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoTlberror"></Property>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorErrorInfo">
+      <ComplexType Name="ArmProcessorArmProcessorErrorInfo">
           <Property Name="Version" Type="Edm.Int64"></Property>
           <Property Name="Length" Type="Edm.Int64"></Property>
-          <Property Name="ValidationBits" Type="Nvidia.ArmProcessorArmProcessorerrorInfoValidationBits"></Property>
-          <Property Name="ErrorType" Type="Nvidia.ArmProcessorArmProcessorerrorInfoErrorType"></Property>
-          <Property Name="MultipleError" Type="Nvidia.ArmProcessorArmProcessorerrorInfoMultipleError"></Property>
-          <Property Name="Flags" Type="Nvidia.ArmProcessorArmProcessorerrorInfoFlags"></Property>
-          <Property Name="ErrorInformation" Type="Nvidia.ArmProcessorArmProcessorerrorInfoErrorInformation"></Property>
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoValidationBits"></Property>
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoErrorType"></Property>
+          <Property Name="MultipleError" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoMultipleError"></Property>
+          <Property Name="Flags" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoFlags"></Property>
+          <Property Name="ErrorInformation" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorerrorInfoErrorInformation"></Property>
           <Property Name="VirtualFaultAddress" Type="Edm.Int64"></Property>
           <Property Name="PhysicalFaultAddress" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterContextType">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterContextType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray0">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray0">
           <Property Name="R0" Type="Edm.Int64"></Property>
           <Property Name="R1" Type="Edm.Int64"></Property>
           <Property Name="R2" Type="Edm.Int64"></Property>
@@ -471,9 +472,9 @@
           <Property Name="R13_sp" Type="Edm.Int64"></Property>
           <Property Name="R14_lr" Type="Edm.Int64"></Property>
           <Property Name="R15_pc" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray1">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray1">
           <Property Name="Dfar" Type="Edm.Int64"></Property>
           <Property Name="Dfsr" Type="Edm.Int64"></Property>
           <Property Name="Ifar" Type="Edm.Int64"></Property>
@@ -498,9 +499,9 @@
           <Property Name="Ttbr0" Type="Edm.Int64"></Property>
           <Property Name="Ttbr1" Type="Edm.Int64"></Property>
           <Property Name="Dacr" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray2">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray2">
           <Property Name="Elr_hyp" Type="Edm.Int64"></Property>
           <Property Name="Hamair0" Type="Edm.Int64"></Property>
           <Property Name="Hamair1" Type="Edm.Int64"></Property>
@@ -517,14 +518,14 @@
           <Property Name="Vtcr" Type="Edm.Int64"></Property>
           <Property Name="Vttbr" Type="Edm.Int64"></Property>
           <Property Name="Dacr32_el2" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray3">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray3">
           <Property Name="Sctlr_s" Type="Edm.Int64"></Property>
           <Property Name="Spsr_mon" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray4">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray4">
           <Property Name="X0" Type="Edm.Int64"></Property>
           <Property Name="X1" Type="Edm.Int64"></Property>
           <Property Name="X2" Type="Edm.Int64"></Property>
@@ -557,9 +558,9 @@
           <Property Name="X29" Type="Edm.Int64"></Property>
           <Property Name="X30" Type="Edm.Int64"></Property>
           <Property Name="Sp" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray5">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray5">
           <Property Name="Elr_el1" Type="Edm.Int64"></Property>
           <Property Name="Esr_el1" Type="Edm.Int64"></Property>
           <Property Name="Far_el1" Type="Edm.Int64"></Property>
@@ -577,9 +578,9 @@
           <Property Name="Tpidrro_el0" Type="Edm.Int64"></Property>
           <Property Name="Ttbr0_el1" Type="Edm.Int64"></Property>
           <Property Name="Ttbr1_el1" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray6">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray6">
           <Property Name="Elr_el2" Type="Edm.Int64"></Property>
           <Property Name="Esr_el2" Type="Edm.Int64"></Property>
           <Property Name="Far_el2" Type="Edm.Int64"></Property>
@@ -595,9 +596,9 @@
           <Property Name="Ttbr0_el2" Type="Edm.Int64"></Property>
           <Property Name="Vtcr_el2" Type="Edm.Int64"></Property>
           <Property Name="Vttbr_el2" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray7">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray7">
           <Property Name="Elr_el3" Type="Edm.Int64"></Property>
           <Property Name="Esr_el3" Type="Edm.Int64"></Property>
           <Property Name="Far_el3" Type="Edm.Int64"></Property>
@@ -608,69 +609,69 @@
           <Property Name="Tcr_el3" Type="Edm.Int64"></Property>
           <Property Name="Tpidr_el3" Type="Edm.Int64"></Property>
           <Property Name="Ttbr0_el3" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Registerarray8MrsEncoding">
+      <ComplexType Name="Registerarray8MrsEncoding">
           <Property Name="Op2" Type="Edm.Int64"></Property>
           <Property Name="Crm" Type="Edm.Int64"></Property>
           <Property Name="Crn" Type="Edm.Int64"></Property>
           <Property Name="Op1" Type="Edm.Int64"></Property>
           <Property Name="O0" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray8">
-          <Property Name="MrsEncoding" Type="Nvidia.Registerarray8MrsEncoding"></Property>
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray8">
+          <Property Name="MrsEncoding" Type="NvidiaCPER.v1_0_0.Registerarray8MrsEncoding"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterarray9">
+      <ComplexType Name="ArmProcessorArmProcessorRegisterarray9">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorRegisterArray">
-          <Property Name="Registerarray0" Type="Nvidia.ArmProcessorArmProcessorRegisterarray0"></Property>
-          <Property Name="Registerarray1" Type="Nvidia.ArmProcessorArmProcessorRegisterarray1"></Property>
-          <Property Name="Registerarray2" Type="Nvidia.ArmProcessorArmProcessorRegisterarray2"></Property>
-          <Property Name="Registerarray3" Type="Nvidia.ArmProcessorArmProcessorRegisterarray3"></Property>
-          <Property Name="Registerarray4" Type="Nvidia.ArmProcessorArmProcessorRegisterarray4"></Property>
-          <Property Name="Registerarray5" Type="Nvidia.ArmProcessorArmProcessorRegisterarray5"></Property>
-          <Property Name="Registerarray6" Type="Nvidia.ArmProcessorArmProcessorRegisterarray6"></Property>
-          <Property Name="Registerarray7" Type="Nvidia.ArmProcessorArmProcessorRegisterarray7"></Property>
-          <Property Name="Registerarray8" Type="Nvidia.ArmProcessorArmProcessorRegisterarray8"></Property>
-          <Property Name="Registerarray9" Type="Nvidia.ArmProcessorArmProcessorRegisterarray9"></Property>
-      </EntityType>
+      <ComplexType Name="ArmProcessorArmProcessorRegisterArray">
+          <Property Name="Registerarray0" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray0"></Property>
+          <Property Name="Registerarray1" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray1"></Property>
+          <Property Name="Registerarray2" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray2"></Property>
+          <Property Name="Registerarray3" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray3"></Property>
+          <Property Name="Registerarray4" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray4"></Property>
+          <Property Name="Registerarray5" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray5"></Property>
+          <Property Name="Registerarray6" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray6"></Property>
+          <Property Name="Registerarray7" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray7"></Property>
+          <Property Name="Registerarray8" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray8"></Property>
+          <Property Name="Registerarray9" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterarray9"></Property>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorContextInfo">
+      <ComplexType Name="ArmProcessorArmProcessorContextInfo">
           <Property Name="Version" Type="Edm.Int64"></Property>
-          <Property Name="RegisterContextType" Type="Nvidia.ArmProcessorArmProcessorRegisterContextType"></Property>
+          <Property Name="RegisterContextType" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterContextType"></Property>
           <Property Name="RegisterArraySize" Type="Edm.Int64"></Property>
-          <Property Name="RegisterArray" Type="Nvidia.ArmProcessorArmProcessorRegisterArray"></Property>
-      </EntityType>
+          <Property Name="RegisterArray" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorRegisterArray"></Property>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessorVendorSpecificInfo">
+      <ComplexType Name="ArmProcessorArmProcessorVendorSpecificInfo">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessorArmProcessor">
-          <Property Name="ValidationBits" Type="Nvidia.ArmProcessorArmProcessorValidationBits"></Property>
+      <ComplexType Name="ArmProcessorArmProcessor">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorValidationBits"></Property>
           <Property Name="ErrorInfoNum" Type="Edm.Int64"></Property>
           <Property Name="ContextInfoNum" Type="Edm.Int64"></Property>
           <Property Name="SectionLength" Type="Edm.Int64"></Property>
-          <Property Name="ErrorAffinity" Type="Nvidia.ArmProcessorArmProcessorErrorAffinity"></Property>
+          <Property Name="ErrorAffinity" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorErrorAffinity"></Property>
           <Property Name="MpidrEl1" Type="Edm.Int64"></Property>
           <Property Name="MidrEl1" Type="Edm.Int64"></Property>
           <Property Name="Running" Type="Edm.Boolean"></Property>
           <Property Name="PsciState" Type="Edm.Int64"></Property>
-          <Property Name="ErrorInfo" Type="Nvidia.ArmProcessorArmProcessorErrorInfo"></Property>
-          <Property Name="ContextInfo" Type="Nvidia.ArmProcessorArmProcessorContextInfo"></Property>
-          <Property Name="VendorSpecificInfo" Type="Nvidia.ArmProcessorArmProcessorVendorSpecificInfo"></Property>
-      </EntityType>
+          <Property Name="ErrorInfo" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorErrorInfo"></Property>
+          <Property Name="ContextInfo" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorContextInfo"></Property>
+          <Property Name="VendorSpecificInfo" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessorVendorSpecificInfo"></Property>
+      </ComplexType>
 
-      <EntityType Name="ArmProcessor">
-          <Property Name="ArmProcessor" Type="Nvidia.ArmProcessorArmProcessor"></Property>
-      </EntityType>
+      <ComplexType Name="ArmProcessor">
+          <Property Name="ArmProcessor" Type="NvidiaCPER.v1_0_0.ArmProcessorArmProcessor"></Property>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryValidationBits">
+      <ComplexType Name="MemoryMemoryValidationBits">
           <Property Name="ErrorStatusValid" Type="Edm.Boolean"></Property>
           <Property Name="PhysicalAddressValid" Type="Edm.Boolean"></Property>
           <Property Name="PhysicalAddressMaskValid" Type="Edm.Boolean"></Property>
@@ -693,16 +694,16 @@
           <Property Name="BankGroupValid" Type="Edm.Boolean"></Property>
           <Property Name="BankAddressValid" Type="Edm.Boolean"></Property>
           <Property Name="ChipIdentificationValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="ErrorStatusErrorType">
+      <ComplexType Name="ErrorStatusErrorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
           <Property Name="Description" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryErrorStatus">
-          <Property Name="ErrorType" Type="Nvidia.ErrorStatusErrorType"></Property>
+      <ComplexType Name="MemoryMemoryErrorStatus">
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.ErrorStatusErrorType"></Property>
           <Property Name="AddressSignal" Type="Edm.Boolean"></Property>
           <Property Name="ControlSignal" Type="Edm.Boolean"></Property>
           <Property Name="DataSignal" Type="Edm.Boolean"></Property>
@@ -710,39 +711,39 @@
           <Property Name="DetectedByRequester" Type="Edm.Boolean"></Property>
           <Property Name="FirstError" Type="Edm.Boolean"></Property>
           <Property Name="OverflowDroppedLogs" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryBank0">
+      <ComplexType Name="MemoryMemoryBank0">
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryBank1">
+      <ComplexType Name="MemoryMemoryBank1">
           <Property Name="Address" Type="Edm.Int64"></Property>
           <Property Name="Group" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryBank">
-          <Property Name="Bank0" Type="Nvidia.MemoryMemoryBank0"></Property>
-          <Property Name="Bank1" Type="Nvidia.MemoryMemoryBank1"></Property>
-      </EntityType>
+      <ComplexType Name="MemoryMemoryBank">
+          <Property Name="Bank0" Type="NvidiaCPER.v1_0_0.MemoryMemoryBank0"></Property>
+          <Property Name="Bank1" Type="NvidiaCPER.v1_0_0.MemoryMemoryBank1"></Property>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryMemoryErrorType">
+      <ComplexType Name="MemoryMemoryMemoryErrorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemoryExtended">
+      <ComplexType Name="MemoryMemoryExtended">
           <Property Name="RowBit16" Type="Edm.Boolean"></Property>
           <Property Name="RowBit17" Type="Edm.Boolean"></Property>
           <Property Name="ChipIdentification" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="MemoryMemory">
-          <Property Name="ValidationBits" Type="Nvidia.MemoryMemoryValidationBits"></Property>
-          <Property Name="ErrorStatus" Type="Nvidia.MemoryMemoryErrorStatus"></Property>
-          <Property Name="Bank" Type="Nvidia.MemoryMemoryBank"></Property>
-          <Property Name="MemoryErrorType" Type="Nvidia.MemoryMemoryMemoryErrorType"></Property>
-          <Property Name="Extended" Type="Nvidia.MemoryMemoryExtended"></Property>
+      <ComplexType Name="MemoryMemory">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.MemoryMemoryValidationBits"></Property>
+          <Property Name="ErrorStatus" Type="NvidiaCPER.v1_0_0.MemoryMemoryErrorStatus"></Property>
+          <Property Name="Bank" Type="NvidiaCPER.v1_0_0.MemoryMemoryBank"></Property>
+          <Property Name="MemoryErrorType" Type="NvidiaCPER.v1_0_0.MemoryMemoryMemoryErrorType"></Property>
+          <Property Name="Extended" Type="NvidiaCPER.v1_0_0.MemoryMemoryExtended"></Property>
           <Property Name="PhysicalAddress" Type="Edm.Int64"></Property>
           <Property Name="PhysicalAddressMask" Type="Edm.Int64"></Property>
           <Property Name="Node" Type="Edm.Int64"></Property>
@@ -758,13 +759,13 @@
           <Property Name="RankNumber" Type="Edm.Int64"></Property>
           <Property Name="CardSmbiosHandle" Type="Edm.Int64"></Property>
           <Property Name="ModuleSmbiosHandle" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory">
-          <Property Name="Memory" Type="Nvidia.MemoryMemory"></Property>
-      </EntityType>
+      <ComplexType Name="Memory">
+          <Property Name="Memory" Type="NvidiaCPER.v1_0_0.MemoryMemory"></Property>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2ValidationBits">
+      <ComplexType Name="Memory2Memory2ValidationBits">
           <Property Name="ErrorStatusValid" Type="Edm.Boolean"></Property>
           <Property Name="PhysicalAddressValid" Type="Edm.Boolean"></Property>
           <Property Name="PhysicalAddressMaskValid" Type="Edm.Boolean"></Property>
@@ -787,10 +788,10 @@
           <Property Name="ModuleHandleValid" Type="Edm.Boolean"></Property>
           <Property Name="BankGroupValid" Type="Edm.Boolean"></Property>
           <Property Name="BankAddressValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2ErrorStatus">
-          <Property Name="ErrorType" Type="Nvidia.ErrorStatusErrorType"></Property>
+      <ComplexType Name="Memory2Memory2ErrorStatus">
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.ErrorStatusErrorType"></Property>
           <Property Name="AddressSignal" Type="Edm.Boolean"></Property>
           <Property Name="ControlSignal" Type="Edm.Boolean"></Property>
           <Property Name="DataSignal" Type="Edm.Boolean"></Property>
@@ -798,38 +799,38 @@
           <Property Name="DetectedByRequester" Type="Edm.Boolean"></Property>
           <Property Name="FirstError" Type="Edm.Boolean"></Property>
           <Property Name="OverflowDroppedLogs" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2Bank0">
+      <ComplexType Name="Memory2Memory2Bank0">
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2Bank1">
+      <ComplexType Name="Memory2Memory2Bank1">
           <Property Name="Address" Type="Edm.Int64"></Property>
           <Property Name="Group" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2Bank">
-          <Property Name="Bank0" Type="Nvidia.Memory2Memory2Bank0"></Property>
-          <Property Name="Bank1" Type="Nvidia.Memory2Memory2Bank1"></Property>
-      </EntityType>
+      <ComplexType Name="Memory2Memory2Bank">
+          <Property Name="Bank0" Type="NvidiaCPER.v1_0_0.Memory2Memory2Bank0"></Property>
+          <Property Name="Bank1" Type="NvidiaCPER.v1_0_0.Memory2Memory2Bank1"></Property>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2MemoryErrorType">
+      <ComplexType Name="Memory2Memory2MemoryErrorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2Status">
+      <ComplexType Name="Memory2Memory2Status">
           <Property Name="Value" Type="Edm.Int64"></Property>
           <Property Name="State" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2Memory2">
-          <Property Name="ValidationBits" Type="Nvidia.Memory2Memory2ValidationBits"></Property>
-          <Property Name="ErrorStatus" Type="Nvidia.Memory2Memory2ErrorStatus"></Property>
-          <Property Name="Bank" Type="Nvidia.Memory2Memory2Bank"></Property>
-          <Property Name="MemoryErrorType" Type="Nvidia.Memory2Memory2MemoryErrorType"></Property>
-          <Property Name="Status" Type="Nvidia.Memory2Memory2Status"></Property>
+      <ComplexType Name="Memory2Memory2">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.Memory2Memory2ValidationBits"></Property>
+          <Property Name="ErrorStatus" Type="NvidiaCPER.v1_0_0.Memory2Memory2ErrorStatus"></Property>
+          <Property Name="Bank" Type="NvidiaCPER.v1_0_0.Memory2Memory2Bank"></Property>
+          <Property Name="MemoryErrorType" Type="NvidiaCPER.v1_0_0.Memory2Memory2MemoryErrorType"></Property>
+          <Property Name="Status" Type="NvidiaCPER.v1_0_0.Memory2Memory2Status"></Property>
           <Property Name="PhysicalAddress" Type="Edm.Int64"></Property>
           <Property Name="PhysicalAddressMask" Type="Edm.Int64"></Property>
           <Property Name="Node" Type="Edm.Int64"></Property>
@@ -846,13 +847,13 @@
           <Property Name="TargetID" Type="Edm.Int64"></Property>
           <Property Name="CardSmbiosHandle" Type="Edm.Int64"></Property>
           <Property Name="ModuleSmbiosHandle" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Memory2">
-          <Property Name="Memory2" Type="Nvidia.Memory2Memory2"></Property>
-      </EntityType>
+      <ComplexType Name="Memory2">
+          <Property Name="Memory2" Type="NvidiaCPER.v1_0_0.Memory2Memory2"></Property>
+      </ComplexType>
 
-      <EntityType Name="PciePcieValidationBits">
+      <ComplexType Name="PciePcieValidationBits">
           <Property Name="PortTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="VersionValid" Type="Edm.Boolean"></Property>
           <Property Name="CommandStatusValid" Type="Edm.Boolean"></Property>
@@ -861,24 +862,24 @@
           <Property Name="BridgeControlStatusValid" Type="Edm.Boolean"></Property>
           <Property Name="CapabilityStructureStatusValid" Type="Edm.Boolean"></Property>
           <Property Name="AerInfoValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePciePortType">
+      <ComplexType Name="PciePciePortType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcieVersion">
+      <ComplexType Name="PciePcieVersion">
           <Property Name="Major" Type="Edm.Int64"></Property>
           <Property Name="Minor" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcieCommandStatus">
+      <ComplexType Name="PciePcieCommandStatus">
           <Property Name="CommandRegister" Type="Edm.Int64"></Property>
           <Property Name="StatusRegister" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcieDeviceID">
+      <ComplexType Name="PciePcieDeviceID">
           <Property Name="VendorID" Type="Edm.Int64"></Property>
           <Property Name="DeviceID" Type="Edm.Int64"></Property>
           <Property Name="ClassCode" Type="Edm.Int64"></Property>
@@ -888,38 +889,38 @@
           <Property Name="PrimaryOrDeviceBusNumber" Type="Edm.Int64"></Property>
           <Property Name="SecondaryBusNumber" Type="Edm.Int64"></Property>
           <Property Name="SlotNumber" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcieBridgeControlStatus">
+      <ComplexType Name="PciePcieBridgeControlStatus">
           <Property Name="SecondaryStatusRegister" Type="Edm.Int64"></Property>
           <Property Name="ControlRegister" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcieCapabilityStructure">
+      <ComplexType Name="PciePcieCapabilityStructure">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcieAerInfo">
+      <ComplexType Name="PciePcieAerInfo">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciePcie">
-          <Property Name="ValidationBits" Type="Nvidia.PciePcieValidationBits"></Property>
-          <Property Name="PortType" Type="Nvidia.PciePciePortType"></Property>
-          <Property Name="Version" Type="Nvidia.PciePcieVersion"></Property>
-          <Property Name="CommandStatus" Type="Nvidia.PciePcieCommandStatus"></Property>
-          <Property Name="DeviceID" Type="Nvidia.PciePcieDeviceID"></Property>
+      <ComplexType Name="PciePcie">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.PciePcieValidationBits"></Property>
+          <Property Name="PortType" Type="NvidiaCPER.v1_0_0.PciePciePortType"></Property>
+          <Property Name="Version" Type="NvidiaCPER.v1_0_0.PciePcieVersion"></Property>
+          <Property Name="CommandStatus" Type="NvidiaCPER.v1_0_0.PciePcieCommandStatus"></Property>
+          <Property Name="DeviceID" Type="NvidiaCPER.v1_0_0.PciePcieDeviceID"></Property>
           <Property Name="DeviceSerialNumber" Type="Edm.Int64"></Property>
-          <Property Name="BridgeControlStatus" Type="Nvidia.PciePcieBridgeControlStatus"></Property>
-          <Property Name="CapabilityStructure" Type="Nvidia.PciePcieCapabilityStructure"></Property>
-          <Property Name="AerInfo" Type="Nvidia.PciePcieAerInfo"></Property>
-      </EntityType>
+          <Property Name="BridgeControlStatus" Type="NvidiaCPER.v1_0_0.PciePcieBridgeControlStatus"></Property>
+          <Property Name="CapabilityStructure" Type="NvidiaCPER.v1_0_0.PciePcieCapabilityStructure"></Property>
+          <Property Name="AerInfo" Type="NvidiaCPER.v1_0_0.PciePcieAerInfo"></Property>
+      </ComplexType>
 
-      <EntityType Name="Pcie">
-          <Property Name="Pcie" Type="Nvidia.PciePcie"></Property>
-      </EntityType>
+      <ComplexType Name="Pcie">
+          <Property Name="Pcie" Type="NvidiaCPER.v1_0_0.PciePcie"></Property>
+      </ComplexType>
 
-      <EntityType Name="PciBusPciBusValidationBits">
+      <ComplexType Name="PciBusPciBusValidationBits">
           <Property Name="ErrorStatusValid" Type="Edm.Boolean"></Property>
           <Property Name="ErrorTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="BusIDValid" Type="Edm.Boolean"></Property>
@@ -929,10 +930,10 @@
           <Property Name="RequestorIDValid" Type="Edm.Boolean"></Property>
           <Property Name="CompleterIDValid" Type="Edm.Boolean"></Property>
           <Property Name="TargetIDValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciBusPciBusErrorStatus">
-          <Property Name="ErrorType" Type="Nvidia.ErrorStatusErrorType"></Property>
+      <ComplexType Name="PciBusPciBusErrorStatus">
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.ErrorStatusErrorType"></Property>
           <Property Name="AddressSignal" Type="Edm.Boolean"></Property>
           <Property Name="ControlSignal" Type="Edm.Boolean"></Property>
           <Property Name="DataSignal" Type="Edm.Boolean"></Property>
@@ -940,45 +941,45 @@
           <Property Name="DetectedByRequester" Type="Edm.Boolean"></Property>
           <Property Name="FirstError" Type="Edm.Boolean"></Property>
           <Property Name="OverflowDroppedLogs" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciBusPciBusErrorType">
+      <ComplexType Name="PciBusPciBusErrorType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciBusPciBusBusID">
+      <ComplexType Name="PciBusPciBusBusID">
           <Property Name="BusNumber" Type="Edm.Int64"></Property>
           <Property Name="SegmentNumber" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciBusPciBus">
-          <Property Name="ValidationBits" Type="Nvidia.PciBusPciBusValidationBits"></Property>
-          <Property Name="ErrorStatus" Type="Nvidia.PciBusPciBusErrorStatus"></Property>
-          <Property Name="ErrorType" Type="Nvidia.PciBusPciBusErrorType"></Property>
-          <Property Name="BusID" Type="Nvidia.PciBusPciBusBusID"></Property>
+      <ComplexType Name="PciBusPciBus">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.PciBusPciBusValidationBits"></Property>
+          <Property Name="ErrorStatus" Type="NvidiaCPER.v1_0_0.PciBusPciBusErrorStatus"></Property>
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.PciBusPciBusErrorType"></Property>
+          <Property Name="BusID" Type="NvidiaCPER.v1_0_0.PciBusPciBusBusID"></Property>
           <Property Name="BusAddress" Type="Edm.Int64"></Property>
           <Property Name="BusData" Type="Edm.Int64"></Property>
           <Property Name="BusCommandType" Type="Edm.String"></Property>
           <Property Name="BusRequestorID" Type="Edm.Int64"></Property>
           <Property Name="BusCompleterID" Type="Edm.Int64"></Property>
           <Property Name="TargetID" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciBus">
-          <Property Name="PciBus" Type="Nvidia.PciBusPciBus"></Property>
-      </EntityType>
+      <ComplexType Name="PciBus">
+          <Property Name="PciBus" Type="NvidiaCPER.v1_0_0.PciBusPciBus"></Property>
+      </ComplexType>
 
-      <EntityType Name="PciComponentPciComponentValidationBits">
+      <ComplexType Name="PciComponentPciComponentValidationBits">
           <Property Name="ErrorStatusValid" Type="Edm.Boolean"></Property>
           <Property Name="IdInfoValid" Type="Edm.Boolean"></Property>
           <Property Name="MemoryNumberValid" Type="Edm.Boolean"></Property>
           <Property Name="IoNumberValid" Type="Edm.Boolean"></Property>
           <Property Name="RegisterDataPairsValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciComponentPciComponentErrorStatus">
-          <Property Name="ErrorType" Type="Nvidia.ErrorStatusErrorType"></Property>
+      <ComplexType Name="PciComponentPciComponentErrorStatus">
+          <Property Name="ErrorType" Type="NvidiaCPER.v1_0_0.ErrorStatusErrorType"></Property>
           <Property Name="AddressSignal" Type="Edm.Boolean"></Property>
           <Property Name="ControlSignal" Type="Edm.Boolean"></Property>
           <Property Name="DataSignal" Type="Edm.Boolean"></Property>
@@ -986,9 +987,9 @@
           <Property Name="DetectedByRequester" Type="Edm.Boolean"></Property>
           <Property Name="FirstError" Type="Edm.Boolean"></Property>
           <Property Name="OverflowDroppedLogs" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciComponentPciComponentIdInfo">
+      <ComplexType Name="PciComponentPciComponentIdInfo">
           <Property Name="VendorID" Type="Edm.Int64"></Property>
           <Property Name="DeviceID" Type="Edm.Int64"></Property>
           <Property Name="ClassCode" Type="Edm.Int64"></Property>
@@ -996,83 +997,83 @@
           <Property Name="DeviceNumber" Type="Edm.Int64"></Property>
           <Property Name="BusNumber" Type="Edm.Int64"></Property>
           <Property Name="SegmentNumber" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciComponentPciComponentRegisterDataPairs">
+      <ComplexType Name="PciComponentPciComponentRegisterDataPairs">
           <Property Name="FirstHalf" Type="Edm.Int64"></Property>
           <Property Name="SecondHalf" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="PciComponentPciComponent">
-          <Property Name="ValidationBits" Type="Nvidia.PciComponentPciComponentValidationBits"></Property>
-          <Property Name="ErrorStatus" Type="Nvidia.PciComponentPciComponentErrorStatus"></Property>
-          <Property Name="IdInfo" Type="Nvidia.PciComponentPciComponentIdInfo"></Property>
+      <ComplexType Name="PciComponentPciComponent">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.PciComponentPciComponentValidationBits"></Property>
+          <Property Name="ErrorStatus" Type="NvidiaCPER.v1_0_0.PciComponentPciComponentErrorStatus"></Property>
+          <Property Name="IdInfo" Type="NvidiaCPER.v1_0_0.PciComponentPciComponentIdInfo"></Property>
           <Property Name="MemoryNumber" Type="Edm.Int64"></Property>
           <Property Name="IoNumber" Type="Edm.Int64"></Property>
-          <Property Name="RegisterDataPairs" Type="Nvidia.PciComponentPciComponentRegisterDataPairs"></Property>
-      </EntityType>
+          <Property Name="RegisterDataPairs" Type="NvidiaCPER.v1_0_0.PciComponentPciComponentRegisterDataPairs"></Property>
+      </ComplexType>
 
-      <EntityType Name="PciComponent">
-          <Property Name="PciComponent" Type="Nvidia.PciComponentPciComponent"></Property>
-      </EntityType>
+      <ComplexType Name="PciComponent">
+          <Property Name="PciComponent" Type="NvidiaCPER.v1_0_0.PciComponentPciComponent"></Property>
+      </ComplexType>
 
-      <EntityType Name="FirmwareErrorRecordType">
+      <ComplexType Name="FirmwareErrorRecordType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="FirmwareFirmware">
-          <Property Name="ErrorRecordType" Type="Nvidia.FirmwareErrorRecordType"></Property>
+      <ComplexType Name="FirmwareFirmware">
+          <Property Name="ErrorRecordType" Type="NvidiaCPER.v1_0_0.FirmwareErrorRecordType"></Property>
           <Property Name="Revision" Type="Edm.Int64"></Property>
           <Property Name="RecordID" Type="Edm.Int64"></Property>
           <Property Name="RecordIDGUID" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Firmware">
-          <Property Name="Firmware" Type="Nvidia.FirmwareFirmware"></Property>
-      </EntityType>
+      <ComplexType Name="Firmware">
+          <Property Name="Firmware" Type="NvidiaCPER.v1_0_0.FirmwareFirmware"></Property>
+      </ComplexType>
 
-      <EntityType Name="GenericDmarFaultReason">
+      <ComplexType Name="GenericDmarFaultReason">
           <Property Name="Value" Type="Edm.Int64"></Property>
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Description" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericDmarAccessType">
+      <ComplexType Name="GenericDmarAccessType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericDmarAddressType">
+      <ComplexType Name="GenericDmarAddressType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericDmarArchitectureType">
+      <ComplexType Name="GenericDmarArchitectureType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericDmarGenericDmar">
+      <ComplexType Name="GenericDmarGenericDmar">
           <Property Name="RequesterID" Type="Edm.Int64"></Property>
           <Property Name="SegmentNumber" Type="Edm.Int64"></Property>
-          <Property Name="FaultReason" Type="Nvidia.GenericDmarFaultReason"></Property>
-          <Property Name="AccessType" Type="Nvidia.GenericDmarAccessType"></Property>
-          <Property Name="AddressType" Type="Nvidia.GenericDmarAddressType"></Property>
-          <Property Name="ArchitectureType" Type="Nvidia.GenericDmarArchitectureType"></Property>
+          <Property Name="FaultReason" Type="NvidiaCPER.v1_0_0.GenericDmarFaultReason"></Property>
+          <Property Name="AccessType" Type="NvidiaCPER.v1_0_0.GenericDmarAccessType"></Property>
+          <Property Name="AddressType" Type="NvidiaCPER.v1_0_0.GenericDmarAddressType"></Property>
+          <Property Name="ArchitectureType" Type="NvidiaCPER.v1_0_0.GenericDmarArchitectureType"></Property>
           <Property Name="DeviceAddress" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="GenericDmar">
-          <Property Name="GenericDmar" Type="Nvidia.GenericDmarGenericDmar"></Property>
-      </EntityType>
+      <ComplexType Name="GenericDmar">
+          <Property Name="GenericDmar" Type="NvidiaCPER.v1_0_0.GenericDmarGenericDmar"></Property>
+      </ComplexType>
 
-      <EntityType Name="VtdDmarType">
+      <ComplexType Name="VtdDmarType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="VtdDmarFaultRecord">
+      <ComplexType Name="VtdDmarFaultRecord">
           <Property Name="FaultInformation" Type="Edm.Int64"></Property>
           <Property Name="SourceIdentifier" Type="Edm.Int64"></Property>
           <Property Name="PrivelegeModeRequested" Type="Edm.Boolean"></Property>
@@ -1081,10 +1082,10 @@
           <Property Name="FaultReason" Type="Edm.Int64"></Property>
           <Property Name="PasidValue" Type="Edm.Int64"></Property>
           <Property Name="AddressType" Type="Edm.Int64"></Property>
-          <Property Name="Type" Type="Nvidia.VtdDmarType"></Property>
-      </EntityType>
+          <Property Name="Type" Type="NvidiaCPER.v1_0_0.VtdDmarType"></Property>
+      </ComplexType>
 
-      <EntityType Name="VtdDmarVtdDmar">
+      <ComplexType Name="VtdDmarVtdDmar">
           <Property Name="Version" Type="Edm.Int64"></Property>
           <Property Name="Revision" Type="Edm.Int64"></Property>
           <Property Name="OemID" Type="Edm.Int64"></Property>
@@ -1093,7 +1094,7 @@
           <Property Name="GlobalCommandRegister" Type="Edm.Int64"></Property>
           <Property Name="GlobalStatusRegister" Type="Edm.Int64"></Property>
           <Property Name="FaultStatusRegister" Type="Edm.Int64"></Property>
-          <Property Name="FaultRecord" Type="Nvidia.VtdDmarFaultRecord"></Property>
+          <Property Name="FaultRecord" Type="NvidiaCPER.v1_0_0.VtdDmarFaultRecord"></Property>
           <Property Name="RootEntry" Type="Edm.String"></Property>
           <Property Name="ContextEntry" Type="Edm.String"></Property>
           <Property Name="PageTableEntry_Level6" Type="Edm.Int64"></Property>
@@ -1102,13 +1103,13 @@
           <Property Name="PageTableEntry_Level3" Type="Edm.Int64"></Property>
           <Property Name="PageTableEntry_Level2" Type="Edm.Int64"></Property>
           <Property Name="PageTableEntry_Level1" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="VtdDmar">
-          <Property Name="VtdDmar" Type="Nvidia.VtdDmarVtdDmar"></Property>
-      </EntityType>
+      <ComplexType Name="VtdDmar">
+          <Property Name="VtdDmar" Type="NvidiaCPER.v1_0_0.VtdDmarVtdDmar"></Property>
+      </ComplexType>
 
-      <EntityType Name="IommuDmarIommuDmar">
+      <ComplexType Name="IommuDmarIommuDmar">
           <Property Name="Revision" Type="Edm.Int64"></Property>
           <Property Name="ControlRegister" Type="Edm.Int64"></Property>
           <Property Name="StatusRegister" Type="Edm.Int64"></Property>
@@ -1120,31 +1121,31 @@
           <Property Name="PageTableEntry_Level3" Type="Edm.Int64"></Property>
           <Property Name="PageTableEntry_Level2" Type="Edm.Int64"></Property>
           <Property Name="PageTableEntry_Level1" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="IommuDmar">
-          <Property Name="IommuDmar" Type="Nvidia.IommuDmarIommuDmar"></Property>
-      </EntityType>
+      <ComplexType Name="IommuDmar">
+          <Property Name="IommuDmar" Type="NvidiaCPER.v1_0_0.IommuDmarIommuDmar"></Property>
+      </ComplexType>
 
-      <EntityType Name="CcixPerCcixPerValidationBits">
+      <ComplexType Name="CcixPerCcixPerValidationBits">
           <Property Name="CcixSourceIDValid" Type="Edm.Boolean"></Property>
           <Property Name="CcixPortIDValid" Type="Edm.Boolean"></Property>
           <Property Name="CcixPERLogValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CcixPerCcixPer">
+      <ComplexType Name="CcixPerCcixPer">
           <Property Name="Length" Type="Edm.Int64"></Property>
-          <Property Name="ValidationBits" Type="Nvidia.CcixPerCcixPerValidationBits"></Property>
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.CcixPerCcixPerValidationBits"></Property>
           <Property Name="CcixSourceID" Type="Edm.Int64"></Property>
           <Property Name="CcixPortID" Type="Edm.Int64"></Property>
           <Property Name="CcixPERLog" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CcixPer">
-          <Property Name="CcixPer" Type="Nvidia.CcixPerCcixPer"></Property>
-      </EntityType>
+      <ComplexType Name="CcixPer">
+          <Property Name="CcixPer" Type="NvidiaCPER.v1_0_0.CcixPerCcixPer"></Property>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocolValidationBits">
+      <ComplexType Name="CxlProtocolCxlProtocolValidationBits">
           <Property Name="CxlAgentTypeValid" Type="Edm.Boolean"></Property>
           <Property Name="CxlAgentAddressValid" Type="Edm.Boolean"></Property>
           <Property Name="DeviceIDValid" Type="Edm.Boolean"></Property>
@@ -1152,62 +1153,62 @@
           <Property Name="CapabilityStructureValid" Type="Edm.Boolean"></Property>
           <Property Name="CxlDVSECValid" Type="Edm.Boolean"></Property>
           <Property Name="CxlErrorLogValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocolAgentType">
+      <ComplexType Name="CxlProtocolCxlProtocolAgentType">
           <Property Name="Name" Type="Edm.String"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocolCxlagentaddress0">
+      <ComplexType Name="CxlProtocolCxlProtocolCxlagentaddress0">
           <Property Name="FunctionNumber" Type="Edm.Int64"></Property>
           <Property Name="DeviceNumber" Type="Edm.Int64"></Property>
           <Property Name="BusNumber" Type="Edm.Int64"></Property>
           <Property Name="SegmentNumber" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocolCxlagentaddress1">
+      <ComplexType Name="CxlProtocolCxlProtocolCxlagentaddress1">
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocolCxlAgentAddress">
-          <Property Name="Cxlagentaddress0" Type="Nvidia.CxlProtocolCxlProtocolCxlagentaddress0"></Property>
-          <Property Name="Cxlagentaddress1" Type="Nvidia.CxlProtocolCxlProtocolCxlagentaddress1"></Property>
-      </EntityType>
+      <ComplexType Name="CxlProtocolCxlProtocolCxlAgentAddress">
+          <Property Name="Cxlagentaddress0" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocolCxlagentaddress0"></Property>
+          <Property Name="Cxlagentaddress1" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocolCxlagentaddress1"></Property>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocolDeviceID">
+      <ComplexType Name="CxlProtocolCxlProtocolDeviceID">
           <Property Name="VendorID" Type="Edm.Int64"></Property>
           <Property Name="DeviceID" Type="Edm.Int64"></Property>
           <Property Name="SubsystemVendorID" Type="Edm.Int64"></Property>
           <Property Name="SubsystemDeviceID" Type="Edm.Int64"></Property>
           <Property Name="ClassCode" Type="Edm.Int64"></Property>
           <Property Name="SlotNumber" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocolCxlProtocol">
-          <Property Name="ValidationBits" Type="Nvidia.CxlProtocolCxlProtocolValidationBits"></Property>
-          <Property Name="AgentType" Type="Nvidia.CxlProtocolCxlProtocolAgentType"></Property>
-          <Property Name="CxlAgentAddress" Type="Nvidia.CxlProtocolCxlProtocolCxlAgentAddress"></Property>
-          <Property Name="DeviceID" Type="Nvidia.CxlProtocolCxlProtocolDeviceID"></Property>
+      <ComplexType Name="CxlProtocolCxlProtocol">
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocolValidationBits"></Property>
+          <Property Name="AgentType" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocolAgentType"></Property>
+          <Property Name="CxlAgentAddress" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocolCxlAgentAddress"></Property>
+          <Property Name="DeviceID" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocolDeviceID"></Property>
           <Property Name="DeviceSerial" Type="Edm.Int64"></Property>
           <Property Name="CapabilityStructure" Type="Edm.String"></Property>
           <Property Name="DvsecLength" Type="Edm.Int64"></Property>
           <Property Name="ErrorLogLength" Type="Edm.Int64"></Property>
           <Property Name="CxlDVSEC" Type="Edm.String"></Property>
           <Property Name="CxlErrorLog" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlProtocol">
-          <Property Name="CxlProtocol" Type="Nvidia.CxlProtocolCxlProtocol"></Property>
-      </EntityType>
+      <ComplexType Name="CxlProtocol">
+          <Property Name="CxlProtocol" Type="NvidiaCPER.v1_0_0.CxlProtocolCxlProtocol"></Property>
+      </ComplexType>
 
-      <EntityType Name="CxlComponentCxlComponentValidationBits">
+      <ComplexType Name="CxlComponentCxlComponentValidationBits">
           <Property Name="DeviceIDValid" Type="Edm.Boolean"></Property>
           <Property Name="DeviceSerialValid" Type="Edm.Boolean"></Property>
           <Property Name="CxlComponentEventLogValid" Type="Edm.Boolean"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlComponentCxlComponentDeviceID">
+      <ComplexType Name="CxlComponentCxlComponentDeviceID">
           <Property Name="VendorID" Type="Edm.Int64"></Property>
           <Property Name="DeviceID" Type="Edm.Int64"></Property>
           <Property Name="FunctionNumber" Type="Edm.Int64"></Property>
@@ -1215,87 +1216,87 @@
           <Property Name="BusNumber" Type="Edm.Int64"></Property>
           <Property Name="SegmentNumber" Type="Edm.Int64"></Property>
           <Property Name="SlotNumber" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlComponentCxlComponentCxlComponentEventLog">
+      <ComplexType Name="CxlComponentCxlComponentCxlComponentEventLog">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="CxlComponentCxlComponent">
+      <ComplexType Name="CxlComponentCxlComponent">
           <Property Name="Length" Type="Edm.Int64"></Property>
-          <Property Name="ValidationBits" Type="Nvidia.CxlComponentCxlComponentValidationBits"></Property>
-          <Property Name="DeviceID" Type="Nvidia.CxlComponentCxlComponentDeviceID"></Property>
+          <Property Name="ValidationBits" Type="NvidiaCPER.v1_0_0.CxlComponentCxlComponentValidationBits"></Property>
+          <Property Name="DeviceID" Type="NvidiaCPER.v1_0_0.CxlComponentCxlComponentDeviceID"></Property>
           <Property Name="DeviceSerial" Type="Edm.Int64"></Property>
-          <Property Name="CxlComponentEventLog" Type="Nvidia.CxlComponentCxlComponentCxlComponentEventLog"></Property>
-      </EntityType>
+          <Property Name="CxlComponentEventLog" Type="NvidiaCPER.v1_0_0.CxlComponentCxlComponentCxlComponentEventLog"></Property>
+      </ComplexType>
 
-      <EntityType Name="CxlComponent">
-          <Property Name="CxlComponent" Type="Nvidia.CxlComponentCxlComponent"></Property>
-      </EntityType>
+      <ComplexType Name="CxlComponent">
+          <Property Name="CxlComponent" Type="NvidiaCPER.v1_0_0.CxlComponentCxlComponent"></Property>
+      </ComplexType>
 
-      <EntityType Name="NvidiaSeverity">
+      <ComplexType Name="NvidiaSeverity">
           <Property Name="Code" Type="Edm.Int64"></Property>
           <Property Name="Name" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="NvidiaRegisters">
+      <ComplexType Name="NvidiaRegisters">
           <Property Name="Address" Type="Edm.Int64"></Property>
           <Property Name="Value" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="NvidiaNvidia">
+      <ComplexType Name="NvidiaNvidia">
           <Property Name="Signature" Type="Edm.String"></Property>
           <Property Name="ErrorType" Type="Edm.Int64"></Property>
           <Property Name="ErrorInstance" Type="Edm.Int64"></Property>
-          <Property Name="Severity" Type="Nvidia.NvidiaSeverity"></Property>
+          <Property Name="Severity" Type="NvidiaCPER.v1_0_0.NvidiaSeverity"></Property>
           <Property Name="Socket" Type="Edm.Int64"></Property>
           <Property Name="RegisterCount" Type="Edm.Int64"></Property>
           <Property Name="InstanceBase" Type="Edm.Int64"></Property>
-          <Property Name="Registers" Type="Nvidia.NvidiaRegisters"></Property>
-      </EntityType>
+          <Property Name="Registers" Type="NvidiaCPER.v1_0_0.NvidiaRegisters"></Property>
+      </ComplexType>
 
-      <EntityType Name="Nvidia">
-          <Property Name="Nvidia" Type="Nvidia.NvidiaNvidia"></Property>
-      </EntityType>
+      <ComplexType Name="Nvidia">
+          <Property Name="Nvidia" Type="NvidiaCPER.v1_0_0.NvidiaNvidia"></Property>
+      </ComplexType>
 
-      <EntityType Name="AmpereNvidia">
+      <ComplexType Name="AmpereNvidia">
           <Property Name="TypeId" Type="Edm.Int64"></Property>
           <Property Name="SubTypeId" Type="Edm.Int64"></Property>
           <Property Name="InstanceId" Type="Edm.Int64"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Ampere">
-          <Property Name="Nvidia" Type="Nvidia.AmpereNvidia"></Property>
-      </EntityType>
+      <ComplexType Name="Ampere">
+          <Property Name="Nvidia" Type="NvidiaCPER.v1_0_0.AmpereNvidia"></Property>
+      </ComplexType>
 
-      <EntityType Name="UnknownUnknown">
+      <ComplexType Name="UnknownUnknown">
           <Property Name="Data" Type="Edm.String"></Property>
-      </EntityType>
+      </ComplexType>
 
-      <EntityType Name="Unknown">
-          <Property Name="Unknown" Type="Nvidia.UnknownUnknown"></Property>
-      </EntityType>
+      <ComplexType Name="Unknown">
+          <Property Name="Unknown" Type="NvidiaCPER.v1_0_0.UnknownUnknown"></Property>
+      </ComplexType>
 
-      <EntityType Name="Nvidia">
-          <Property Name="GenericProcessor" Type="Nvidia.GenericProcessor"></Property>
-          <Property Name="Ia32X64Processor" Type="Nvidia.Ia32X64Processor"></Property>
-          <Property Name="ArmProcessor" Type="Nvidia.ArmProcessor"></Property>
-          <Property Name="Memory" Type="Nvidia.Memory"></Property>
-          <Property Name="Memory2" Type="Nvidia.Memory2"></Property>
-          <Property Name="Pcie" Type="Nvidia.Pcie"></Property>
-          <Property Name="PciBus" Type="Nvidia.PciBus"></Property>
-          <Property Name="PciComponent" Type="Nvidia.PciComponent"></Property>
-          <Property Name="Firmware" Type="Nvidia.Firmware"></Property>
-          <Property Name="GenericDmar" Type="Nvidia.GenericDmar"></Property>
-          <Property Name="VtdDmar" Type="Nvidia.VtdDmar"></Property>
-          <Property Name="IommuDmar" Type="Nvidia.IommuDmar"></Property>
-          <Property Name="CcixPer" Type="Nvidia.CcixPer"></Property>
-          <Property Name="CxlProtocol" Type="Nvidia.CxlProtocol"></Property>
-          <Property Name="CxlComponent" Type="Nvidia.CxlComponent"></Property>
-          <Property Name="Nvidia" Type="Nvidia.Nvidia"></Property>
-          <Property Name="Ampere" Type="Nvidia.Ampere"></Property>
-          <Property Name="Unknown" Type="Nvidia.Unknown"></Property>
-      </EntityType>
+      <ComplexType Name="NvidiaCPER">
+          <Property Name="GenericProcessor" Type="NvidiaCPER.v1_0_0.GenericProcessor"></Property>
+          <Property Name="Ia32X64Processor" Type="NvidiaCPER.v1_0_0.Ia32X64Processor"></Property>
+          <Property Name="ArmProcessor" Type="NvidiaCPER.v1_0_0.ArmProcessor"></Property>
+          <Property Name="Memory" Type="NvidiaCPER.v1_0_0.Memory"></Property>
+          <Property Name="Memory2" Type="NvidiaCPER.v1_0_0.Memory2"></Property>
+          <Property Name="Pcie" Type="NvidiaCPER.v1_0_0.Pcie"></Property>
+          <Property Name="PciBus" Type="NvidiaCPER.v1_0_0.PciBus"></Property>
+          <Property Name="PciComponent" Type="NvidiaCPER.v1_0_0.PciComponent"></Property>
+          <Property Name="Firmware" Type="NvidiaCPER.v1_0_0.Firmware"></Property>
+          <Property Name="GenericDmar" Type="NvidiaCPER.v1_0_0.GenericDmar"></Property>
+          <Property Name="VtdDmar" Type="NvidiaCPER.v1_0_0.VtdDmar"></Property>
+          <Property Name="IommuDmar" Type="NvidiaCPER.v1_0_0.IommuDmar"></Property>
+          <Property Name="CcixPer" Type="NvidiaCPER.v1_0_0.CcixPer"></Property>
+          <Property Name="CxlProtocol" Type="NvidiaCPER.v1_0_0.CxlProtocol"></Property>
+          <Property Name="CxlComponent" Type="NvidiaCPER.v1_0_0.CxlComponent"></Property>
+          <Property Name="Nvidia" Type="NvidiaCPER.v1_0_0.Nvidia"></Property>
+          <Property Name="Ampere" Type="NvidiaCPER.v1_0_0.Ampere"></Property>
+          <Property Name="Unknown" Type="NvidiaCPER.v1_0_0.Unknown"></Property>
+      </ComplexType>
 
     </Schema>
   </edmx:DataServices>

@@ -27,7 +27,8 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
     <edmx:Include Namespace="RedfishExtensions.v1_0_0" Alias="Redfish"/>
   </edmx:Reference>
   <edmx:DataServices>
-    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="Nvidia.v1_0_0">
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER"> </Schema>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER.v1_0_0">
 """
 FOOTER = """
     </Schema>
@@ -175,6 +176,7 @@ class JsontoXml:
         Returns:
             result (string): XML schema for CPER output
         """
+        print("basetype: ", basetype)
         if self.debug:
             print("\n\n\n\n")
             print(json.dumps(schema, indent=1))
@@ -287,7 +289,7 @@ class JsontoXml:
                 xml += end
             return (property_xml + xml, None)
 
-    def schema_parser(self, schema, basetype="Nvidia", baseid=""):
+    def schema_parser(self, schema, basetype="NvidiaCPER", baseid=""):
         """
         Wrapper around jsonschema_to_xml
         Args:
@@ -302,7 +304,6 @@ class JsontoXml:
         """
         xml_out = HEADER
         start_property = self.start_property
-        # base_schema = { "required": ['Nvidia'], 'properties' : { 'Nvidia': {} } }
         while not schema.get(start_property):
             if schema.get("oneOf"):
                 schema = schema["oneOf"][0]
@@ -367,8 +368,8 @@ class JsontoXml:
         if ele == "base":
             # print("in encode_xml: args baseid: %s , val: %s, basetype: %s"%(baseid, val, basetype))
             return (
-                '\n      <EntityType Name="' + entity_name + '">\n',
-                "      </EntityType>\n",
+                '\n      <ComplexType Name="' + entity_name + '">\n',
+                "      </ComplexType>\n",
             )
         elif ele == "property":
             if self.parent_basetype:
@@ -545,7 +546,7 @@ if __name__ == "__main__":
         if args.parent_basetype:
             parent_basetype = args.parent_basetype[0]
         else:
-            parent_basetype = "Nvidia"
+            parent_basetype = "NvidiaCPER.v1_0_0"
 
         if args.argstart:
             argstart = args.argstart[0]
@@ -594,7 +595,7 @@ if __name__ == "__main__":
         if args.parent_basetype:
             parent_basetype = args.parent_basetype[0]
         else:
-            parent_basetype = "Nvidia"
+            parent_basetype = "NvidiaCPER.v1_0_0"
 
         if args.argstart:
             argstart = args.argstart[0]
@@ -618,8 +619,8 @@ if __name__ == "__main__":
 
         output = xml_obj.schema_parser(master_schema)
 
-        out_file = "master-schema.xml"
-        print("Saving output to master-schema.xml")
+        out_file = "NvidiaCPER_v1.xml"
+        print("Saving output to NvidiaCPER_v1.xml")
         print("Output filename: ", out_file)
         with open(out_file, "w") as f:
             print(output, file=f)
