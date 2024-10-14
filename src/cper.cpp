@@ -58,82 +58,117 @@ CPER::CPER(const std::string& filename) : cperPath(filename)
 // Convert to logging
 void CPER::prepareToLog(properties& m) const
 {
-    const nlohmann::json& cper = this->jsonData;
-    const auto& header = cper.find("header");
-
-    if (!isValid())
-    {
-        // unknown CPER - use some defaults
-        m["diagnosticDataType"] = "CPER";
-        m["cperSeverity"] = "Unknown";
-    }
-    else if (cper.end() == header)
-    {
-        // single-section CPER
-        m["diagnosticDataType"] = "CPERSection";
-
-        // sectionDescriptor has the CPER's severity & sectionType
-        if ((!cper.value("/sectionDescriptor/severity/name"_json_pointer,
-                         nlohmann::json())
-                  .empty()) &&
-            (!cper.value("/sectionDescriptor/severity/code"_json_pointer,
-                         nlohmann::json())
-                  .empty()) &&
-            (!cper.value("/sectionDescriptor/sectionType/data"_json_pointer,
-                         nlohmann::json())
-                  .empty()))
-        {
-            m["cperSeverity"] = cper["sectionDescriptor"]["severity"]["name"];
-            m["cperSeverityCode"] =
-                to_string(cper["sectionDescriptor"]["severity"]["code"]);
-            m["notificationType"] =
-                cper["sectionDescriptor"]["sectionType"]["data"];
-        }
-        else
-        {
-            lg2::error("Invalid full CPER {1}", "1", this->cperPath);
-            return;
-        }
-    }
-    else
-    {
-        // full CPER
-        m["diagnosticDataType"] = "CPER";
-
-        // header has the CPER's severity & notificationType
-        if ((!cper.value("/header/severity/name"_json_pointer, nlohmann::json())
-                  .empty()) &&
-            (!cper.value("/header/severity/code"_json_pointer, nlohmann::json())
-                  .empty()) &&
-            (!cper.value("/header/notificationType/guid"_json_pointer,
-                         nlohmann::json())
-                  .empty()))
-        {
-            m["cperSeverity"] = cper["header"]["severity"]["name"];
-            m["cperSeverityCode"] =
-                to_string(cper["header"]["severity"]["code"]);
-            m["notificationType"] = cper["header"]["notificationType"]["guid"];
-        }
-        else
-        {
-            lg2::error("Invalid full CPER {1}", "1", this->cperPath);
-            return;
-        }
-    }
-
-    if (isValid())
-    {
-        auto jStr = cper.dump();
-        jStr.erase(std::remove(jStr.begin(), jStr.end(), '='), jStr.end());
-        m["jsonDiagnosticData"] = jStr;
-    }
-
     if (!this->cperData.empty())
     {
         m["diagnosticData"] = toBase64String(this->cperData);
     }
 
     m["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
+
+    if (!isValid())
+    {
+        // unknown CPER - use some defaults
+        m["diagnosticDataType"] = "CPER";
+        m["cperSeverity"] = "Unknown";
+        return;
+    }
+
+    const nlohmann::json& cper = this->jsonData;
+    auto sectionDescriptors = cper.find("sectionDescriptors");
+
+    if (sectionDescriptors == cper.end())
+    {
+        lg2::error("Section Descriptor property not found in CPER log");
+        return;
+    }
+
+    const nlohmann::json::array_t* sectionDs =
+        sectionDescriptors->get_ptr<const nlohmann::json::array_t*>();
+    if (sectionDs == nullptr)
+    {
+        lg2::error("section Descriptors property in CPER is not an array");
+        return;
+    }
+
+    const auto& header = cper.find("header");
+    if (cper.end() == header)
+    {
+        // single-section CPER
+        m["diagnosticDataType"] = "CPERSection";
+
+        // Iterate over Section Descriptors:
+        for (const auto& sectionD : *sectionDs)
+        {
+            // sectionDescriptor has the CPER's severity & sectionType
+            nlohmann::json name =
+                sectionD.value("/severity/name"_json_pointer, nlohmann::json());
+            nlohmann::json code =
+                sectionD.value("/severity/code"_json_pointer, nlohmann::json());
+            nlohmann::json data = sectionD.value(
+                "/notificationType/data"_json_pointer, nlohmann::json());
+            if (!name.empty() && !code.empty() && !data.empty())
+            {
+                m["cperSeverity"] = name;
+                m["cperSeverityCode"] = to_string(code);
+                m["notificationType"] = data;
+            }
+            else
+            {
+                lg2::error("Invalid full CPER {1}", "1", this->cperPath);
+                return;
+            }
+            // We only care about the first section descriptor
+            break;
+        }
+    }
+    else
+    {
+        // full CPER
+        m["diagnosticDataType"] = "CPER";
+        nlohmann::json cperHeader = *header;
+
+        // header has the CPER's severity & notificationType
+        nlohmann::json name =
+            cperHeader.value("/severity/name"_json_pointer, nlohmann::json());
+        nlohmann::json code =
+            cperHeader.value("/severity/code"_json_pointer, nlohmann::json());
+        nlohmann::json data = cperHeader.value(
+            "/notificationType/guid"_json_pointer, nlohmann::json());
+        if (!name.empty() && !code.empty() && !data.empty())
+        {
+            m["cperSeverity"] = name;
+            m["cperSeverityCode"] = to_string(code);
+            m["notificationType"] = data;
+        }
+        else
+        {
+            lg2::error("Invalid full CPER {1}", "1", this->cperPath);
+            return;
+        }
+    }
+
+    // Iterate over Section Descriptors:
+    for (const auto& sectionD : *sectionDs)
+    {
+        // sectionDescriptor has the CPER's severity & sectionType
+        nlohmann::json stype =
+            sectionD.value("/sectionType/data"_json_pointer, nlohmann::json());
+        if (!stype.empty())
+        {
+            m["sectionType"] = stype;
+        }
+        else
+        {
+            lg2::error("sectionType property not found");
+            return;
+        }
+        // We only care about the first section descriptor
+        break;
+    }
+
+    auto jStr = cper.dump();
+    jStr.erase(std::remove(jStr.begin(), jStr.end(), '='), jStr.end());
+    m["jsonDiagnosticData"] = jStr;
 }
 
 // Callback function
