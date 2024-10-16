@@ -165,6 +165,27 @@ class JsontoXml:
         self.required = required
         self.start_property = start_property
         self.error_status_present = False
+        self.skip_props = [
+            "GenericProcessor",
+            "Ia32X64Processor",
+            "ArmProcessor",
+            "Memory",
+            "Memory2",
+            "Pcie",
+            "PciBus",
+            "PciComponent",
+            "Firmware",
+            "GenericDmar",
+            "VtdDmar",
+            "IommuDmar",
+            "CcixPer",
+            "CxlProtocol",
+            "CxlComponent",
+            "Nvidia",
+            "Ampere",
+            "Unknown",
+        ]
+        # ["GenericProcessor"]
 
     def jsonschema_to_xml(self, schema, basetype, baseid, prevproperty=""):
         """
@@ -176,7 +197,6 @@ class JsontoXml:
         Returns:
             result (string): XML schema for CPER output
         """
-        print("basetype: ", basetype)
         if self.debug:
             print("\n\n\n\n")
             print(json.dumps(schema, indent=1))
@@ -201,8 +221,21 @@ class JsontoXml:
                     return 1
 
                 id = schema.get("$id")
-                if id and "namevaluepair" not in id:
+                if id and ("namevaluepair" not in id):
                     basetype = self.format_propname(id)
+                    if basetype in self.skip_props:
+                        print("remove key ", basetype)
+                        k = list(schema["properties"].keys())[0]
+                        return (
+                            self.jsonschema_to_xml(
+                                schema["properties"][k],
+                                basetype,
+                                baseid,
+                                prevproperty,
+                            )[0],
+                            basetype,
+                        )
+
                 start, end = self.encode_xml(baseid, basetype, "base")
                 property_xml = start
 
@@ -242,6 +275,7 @@ class JsontoXml:
                 xml_ret += property_xml
                 if self.debug:
                     print(xml_ret)
+
                 return (xml_ret, ret_id)
 
             else:
@@ -278,10 +312,10 @@ class JsontoXml:
                     print('"$id": "' + idstr + '",')
 
             # This works only if $id is defined for every oneof[]
+            print(properties_oneof, basetype, "bi: ", baseid)
             if len(properties_oneof):
                 xml, end = self.encode_xml(baseid, basetype, "base")
                 for prop in properties_oneof:
-                    print(baseid, prop)
                     xml += self.encode_xml(
                         baseid, prop, "property", "object", basetype=basetype
                     )
@@ -411,6 +445,7 @@ class JsontoXml:
                     else:
                         entity_names.append(name)
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -426,11 +461,13 @@ if __name__ == "__main__":
         help="Select this option to convert an assortment of json schemas into a single schema by using the $ref variable.",
     )
     parser_b = subparsers.add_parser(
-        "json_to_xml", help="Create an XML schema out of a json schema (containing no $ref)"
+        "json_to_xml",
+        help="Create an XML schema out of a json schema (containing no $ref)",
     )
 
     parser_c = subparsers.add_parser(
-        "convert", help="Create an XML schema out of a json schema (might contain $ref)"
+        "convert",
+        help="Create an XML schema out of a json schema (might contain $ref)",
     )
 
     parser_a.add_argument("-v", "--verbose", action="store_true")
@@ -579,7 +616,7 @@ if __name__ == "__main__":
         print("Output filename: ", out_file)
         with open(out_file, "w") as f:
             print(output, file=f)
-    
+
     elif args.subparser_name == "convert":
         print("Creating master json")
         # Master JSON Schema creation
