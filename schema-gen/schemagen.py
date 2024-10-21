@@ -35,9 +35,6 @@ FOOTER = """
   </edmx:DataServices>
 </edmx:Edmx>"""
 
-SKIP_KEYS = ["ArmProcessorArmProcessorerrorInfoErrorInformation"]
-
-
 class SchemaGenerator:
     """
     Class for creating a single json schema by combining refs
@@ -165,7 +162,8 @@ class JsontoXml:
         self.required = required
         self.start_property = start_property
         self.error_status_present = False
-        self.skip_props = [
+        # Resolves $id and property duplications
+        self.skip_idprop = [
             "GenericProcessor",
             "Ia32X64Processor",
             "ArmProcessor",
@@ -184,8 +182,15 @@ class JsontoXml:
             "Nvidia",
             "Ampere",
             "Unknown",
+            "CacheError",
+            "TlbError"
+        ]
+        #Skips properties from being added to XML
+        self.skip_props = [
+            "armprocessorerrorinfoerrorinformation"
         ]
         # ["GenericProcessor"]
+
 
     def jsonschema_to_xml(self, schema, basetype, baseid, prevproperty=""):
         """
@@ -223,7 +228,8 @@ class JsontoXml:
                 id = schema.get("$id")
                 if id and ("namevaluepair" not in id):
                     basetype = self.format_propname(id)
-                    if basetype in self.skip_props:
+                    print("basetype",basetype)
+                    if basetype in self.skip_idprop:
                         print("remove key ", basetype)
                         k = list(schema["properties"].keys())[0]
                         return (
@@ -235,7 +241,8 @@ class JsontoXml:
                             )[0],
                             basetype,
                         )
-
+                
+               
                 start, end = self.encode_xml(baseid, basetype, "base")
                 property_xml = start
 
@@ -260,13 +267,19 @@ class JsontoXml:
                     if prop.lower() == "validationbits":
                         baseid += basetype
                     subschema = propval
-                    property_xml += self.encode_xml(
+                    if (baseid + prop).lower() in self.skip_props:
+                        property_xml += self.handle_errorinfo(baseid, basetype)
+                        # xml_ret += self.jsonschema_to_xml(
+                        # propval, prop, baseid, prevproperty=basetype
+                        # )[0]
+                    else:
+                        property_xml += self.encode_xml(
                         baseid,
                         prop,
                         "property",
                         type=subschema["type"],
                         basetype=basetype,
-                    )
+                        )
                     xml_ret += self.jsonschema_to_xml(
                         propval, prop, baseid, prevproperty=basetype
                     )[0]
@@ -379,7 +392,21 @@ class JsontoXml:
             if n == "section":
                 continue
             ret += n.title()
+        
+        # These need to be handled differently
+        # to match output spec
+        if ret == "Cacheerror":
+            return "CacheError"
+        if ret == "Tlberror":
+            return "TlbError"
         return ret
+    
+    def handle_errorinfo(self, baseid, basetype):
+        xml = ""
+        xml += self.encode_xml(baseid, "CacheError", 'property', 'object', basetype=basetype)
+        xml += self.encode_xml(baseid, "TlbError", 'property', 'object', basetype=basetype)
+        return xml
+        
 
     def encode_xml(self, baseid, val, ele, type=None, basetype=None):
         """
@@ -411,6 +438,16 @@ class JsontoXml:
             else:
                 basetype = basetype[0].upper() + basetype[1:]
             if type == "object" or type == "array":
+                if type == "array":
+                    return (
+                    '          <Property Name="'
+                    + prop_name
+                    + '" Type="Collection('
+                    + basetype
+                    + "."
+                    + prop_type
+                    + ')"></Property>\n'
+                    )
                 return (
                     '          <Property Name="'
                     + prop_name
