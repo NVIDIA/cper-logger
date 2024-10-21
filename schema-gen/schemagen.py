@@ -35,8 +35,6 @@ FOOTER = """
   </edmx:DataServices>
 </edmx:Edmx>"""
 
-SKIP_KEYS = ["ArmProcessorArmProcessorerrorInfoErrorInformation"]
-
 
 class SchemaGenerator:
     """
@@ -84,7 +82,6 @@ class SchemaGenerator:
         """
         if isinstance(schema, dict):
             if "$ref" in schema:
-                print(schema)
                 ref = os.path.basename(schema["$ref"])
                 resolved_schema = self.refresolve(ref)
                 replaced_ref = self.replace_refs(resolved_schema)
@@ -165,7 +162,8 @@ class JsontoXml:
         self.required = required
         self.start_property = start_property
         self.error_status_present = False
-        self.skip_props = [
+        # Resolves $id and property duplications
+        self.skip_idprop = [
             "GenericProcessor",
             "Ia32X64Processor",
             "ArmProcessor",
@@ -184,7 +182,11 @@ class JsontoXml:
             "Nvidia",
             "Ampere",
             "Unknown",
+            "CacheError",
+            "TlbError",
         ]
+        # Skips properties from being added to XML
+        self.skip_props = ["armprocessorerrorinfoerrorinformation"]
         # ["GenericProcessor"]
 
     def jsonschema_to_xml(self, schema, basetype, baseid, prevproperty=""):
@@ -223,8 +225,7 @@ class JsontoXml:
                 id = schema.get("$id")
                 if id and ("namevaluepair" not in id):
                     basetype = self.format_propname(id)
-                    if basetype in self.skip_props:
-                        print("remove key ", basetype)
+                    if basetype in self.skip_idprop:
                         k = list(schema["properties"].keys())[0]
                         return (
                             self.jsonschema_to_xml(
@@ -260,13 +261,16 @@ class JsontoXml:
                     if prop.lower() == "validationbits":
                         baseid += basetype
                     subschema = propval
-                    property_xml += self.encode_xml(
-                        baseid,
-                        prop,
-                        "property",
-                        type=subschema["type"],
-                        basetype=basetype,
-                    )
+                    if (baseid + prop).lower() in self.skip_props:
+                        property_xml += self.handle_errorinfo(baseid, basetype)
+                    else:
+                        property_xml += self.encode_xml(
+                            baseid,
+                            prop,
+                            "property",
+                            type=subschema["type"],
+                            basetype=basetype,
+                        )
                     xml_ret += self.jsonschema_to_xml(
                         propval, prop, baseid, prevproperty=basetype
                     )[0]
@@ -294,7 +298,6 @@ class JsontoXml:
             property_xml = ""
             properties_oneof = []
             for i, item in enumerate(schema):
-                # print("in oneof, basetype:", basetype, json.dumps(item, indent=1))
                 xml, ret_id = self.jsonschema_to_xml(
                     item, basetype, baseid, ""
                 )
@@ -312,12 +315,15 @@ class JsontoXml:
                     print('"$id": "' + idstr + '",')
 
             # This works only if $id is defined for every oneof[]
-            print(properties_oneof, basetype, "bi: ", baseid)
             if len(properties_oneof):
                 xml, end = self.encode_xml(baseid, basetype, "base")
                 for prop in properties_oneof:
                     xml += self.encode_xml(
-                        baseid, prop, "property", "object", basetype=basetype
+                        baseid,
+                        prop,
+                        "property",
+                        "object",
+                        basetype=basetype,
                     )
 
                 xml += end
@@ -379,7 +385,28 @@ class JsontoXml:
             if n == "section":
                 continue
             ret += n.title()
+
+        # These need to be handled differently
+        # to match output spec
+        if ret == "Cacheerror":
+            return "CacheError"
+        if ret == "Tlberror":
+            return "TlbError"
         return ret
+
+    def handle_errorinfo(self, baseid, basetype):
+        xml = ""
+        xml += self.encode_xml(
+            baseid,
+            "CacheError",
+            "property",
+            "object",
+            basetype=basetype,
+        )
+        xml += self.encode_xml(
+            baseid, "TlbError", "property", "object", basetype=basetype
+        )
+        return xml
 
     def encode_xml(self, baseid, val, ele, type=None, basetype=None):
         """
@@ -400,7 +427,6 @@ class JsontoXml:
         prop_name = val[0].upper() + val[1:]
         prop_type = baseid + val[0].upper() + val[1:]
         if ele == "base":
-            # print("in encode_xml: args baseid: %s , val: %s, basetype: %s"%(baseid, val, basetype))
             return (
                 '\n      <ComplexType Name="' + entity_name + '">\n',
                 "      </ComplexType>\n",
@@ -411,6 +437,16 @@ class JsontoXml:
             else:
                 basetype = basetype[0].upper() + basetype[1:]
             if type == "object" or type == "array":
+                if type == "array":
+                    return (
+                        '          <Property Name="'
+                        + prop_name
+                        + '" Type="Collection('
+                        + basetype
+                        + "."
+                        + prop_type
+                        + ')"></Property>\n'
+                    )
                 return (
                     '          <Property Name="'
                     + prop_name
@@ -446,8 +482,7 @@ class JsontoXml:
                         entity_names.append(name)
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(
         prog="JsonSchemaToXML",
         description="Create a master json schema by replacing refs, modify json properties, and convert it to XML.",
@@ -472,12 +507,20 @@ if __name__ == "__main__":
 
     parser_a.add_argument("-v", "--verbose", action="store_true")
     parser_a.add_argument(
-        "-s", "--schema", nargs=1, help="Input json schema", required=True
+        "-s",
+        "--schema",
+        nargs=1,
+        help="Input json schema",
+        required=True,
     )
 
     parser_c.add_argument("-v", "--verbose", action="store_true")
     parser_c.add_argument(
-        "-s", "--schema", nargs=1, help="Input json schema", required=True
+        "-s",
+        "--schema",
+        nargs=1,
+        help="Input json schema",
+        required=True,
     )
 
     parser_a.add_argument(
@@ -498,7 +541,11 @@ if __name__ == "__main__":
 
     parser_b.add_argument("-v", "--verbose", action="store_true")
     parser_b.add_argument(
-        "-s", "--schema", nargs=1, help="Input json schema", required=True
+        "-s",
+        "--schema",
+        nargs=1,
+        help="Input json schema",
+        required=True,
     )
     parser_b.add_argument(
         "-p",
@@ -664,3 +711,7 @@ if __name__ == "__main__":
 
     else:
         exit(1)
+
+
+if __name__ == "__main__":
+    main()
