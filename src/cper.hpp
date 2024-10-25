@@ -22,9 +22,10 @@
 
 #include <map>
 #include <string>
+
 using namespace nlohmann::literals;
 
-using properties = std::map<std::string, std::string>;
+using properties = std::map<uint64_t, std::map<std::string, std::string>>;
 
 class CPER
 {
@@ -34,10 +35,12 @@ class CPER
     CPER(const std::string& filename);
 
     // Populate properties from json for logging
-    void prepareToLog(properties& m) const;
+    uint64_t prepareToLog(properties& dumpData) const;
+    void addDumpDefaults(std::map<std::string, std::string>& log) const;
 
     // Log
-    void log(const properties&, sdbusplus::asio::connection&) const;
+    void log(const std::map<std::string, std::string>&,
+             sdbusplus::asio::connection&) const;
 
     // Get
     bool isValid() const

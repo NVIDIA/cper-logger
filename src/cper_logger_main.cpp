@@ -17,6 +17,7 @@
 
 #include "cper.hpp"
 
+#include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
 
@@ -28,8 +29,28 @@ void cperCreateLog(const std::string& cperPath)
     properties prop;
     CPER cp(cperPath);
 
-    cp.prepareToLog(prop);
-    cp.log(prop, *conn.get());
+    const uint64_t numSec = cp.prepareToLog(prop);
+    if (numSec == 0)
+    {
+        lg2::error("Error creating log");
+        return;
+    }
+    lg2::debug("{1} sections found", "1", numSec);
+
+    for (uint64_t i = 0; i < numSec; i++)
+    {
+        // Check if section[i] actually exists
+        // Use for loop to log in order 0,1,.
+        // The below find() is a guardrail
+        auto it = prop.find(i);
+        if (it == prop.end())
+        {
+            lg2::error("Section with index {1} does not exist", "1", i);
+            break;
+        }
+        // Handle multiple cper sections
+        cp.log(it->second, *conn.get());
+    }
 }
 
 int main(void)
