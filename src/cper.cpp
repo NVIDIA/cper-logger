@@ -223,7 +223,7 @@ int CPER::prepareToLog(properties& dumpMap) const
             // full CPER
             dumpMap[logCountInd]["diagnosticDataType"] = "CPER";
 
-            dumpMap[logCountInd]["cperSeverity"] = to_string(headerName);
+            dumpMap[logCountInd]["cperSeverity"] = headerName;
 
             dumpMap[logCountInd]["cperSeverityCode"] = to_string(headerCode);
 

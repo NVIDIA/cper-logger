@@ -56,8 +56,8 @@ std::string writeTempfile(const unsigned char* data, unsigned int size,
     return fileName;
 }
 
-void parseOut(const properties& m, const nlohmann::json& array,
-              nlohmann::json::object_t& jFlat)
+void parseOut(const std::map<std::string, std::string>& m,
+              const nlohmann::json& array, nlohmann::json::object_t& jFlat)
 {
     for (const auto& item : array)
     {
@@ -102,8 +102,12 @@ nlohmann::json redfishOutput(const properties& m)
     EXPECT_NE(redfishConfig, config.end());
 
     nlohmann::json::object_t jOut;
-    parseOut(m, *redfishConfig, jOut);
-
+    for (const auto& it : m)
+    {
+        parseOut(it.second, *redfishConfig, jOut);
+        // We only want to validate the first section for now
+        return jOut;
+    }
     return jOut;
 }
 
@@ -118,8 +122,8 @@ TEST(CPERTests, GoodParseCCPLEX)
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
     nlohmann::json rf = redfishOutput(prop);
     std::cout << rf << '\n';
     // TODO BUG
@@ -142,8 +146,8 @@ TEST(CPERTests, GoodParsePCIe)
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
     nlohmann::json rf = redfishOutput(prop);
     EXPECT_EQ(
         rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
@@ -163,8 +167,8 @@ TEST(CPERTests, FailParse)
     cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Unknown");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, MultiSeverity)
@@ -178,8 +182,8 @@ TEST(CPERTests, MultiSeverity)
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
     nlohmann::json rf = redfishOutput(prop);
     EXPECT_EQ(
         rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
@@ -201,9 +205,9 @@ TEST(CPERTests, NullSection)
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
     // This is a BUG with this CPER
-    EXPECT_EQ(prop["cperSeverity"], "Corrected");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
     nlohmann::json rf = redfishOutput(prop);
     EXPECT_EQ(
         rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
@@ -221,8 +225,8 @@ TEST(CPERTests, MissingFile)
     cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Unknown");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, NotAFile)
@@ -232,8 +236,8 @@ TEST(CPERTests, NotAFile)
     cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Unknown");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, EmptyFile)
@@ -243,8 +247,8 @@ TEST(CPERTests, EmptyFile)
     cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Unknown");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Unknown");
 }
 
 TEST(CPERTests, HugeFile)
@@ -254,6 +258,6 @@ TEST(CPERTests, HugeFile)
     cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
 
-    EXPECT_EQ(prop["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop["cperSeverity"], "Unknown");
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Unknown");
 }

@@ -69,9 +69,14 @@ add_project_arguments('-DSDBUSPLUS_DISABLE_BOOST_COROUTINES', language: 'cpp')
 phosphor_logging = dependency('phosphor-logging')
 nlohmann_json_dep = dependency(
     'nlohmann_json',
+    required: false,
     version: '>=3.11.2',
     include_type: 'system',
 )
+if not nlohmann_json_dep.found()
+    nlohmann_proj = subproject('nlohmann_json', required: true)
+    nlohmann_json_dep = nlohmann_proj.get_variable('nlohmann_json_dep')
+endif
 
 cxx = meson.get_compiler('cpp')
 
