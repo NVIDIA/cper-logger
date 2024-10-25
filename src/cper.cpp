@@ -92,15 +92,19 @@ void CPER::addDumpDefaults(std::map<std::string, std::string>& log) const
  *  Return:
  *  Number of sections parsed, CPER_PARSE_ERROR on error, CPER_PARSE_EMPTY on 0
  */
-int CPER::prepareToLog(properties& dumpMap) const
+uint64_t CPER::prepareToLog(properties& dumpMap) const
 {
+    uint64_t logCountInd = 0;
+
     if (this->cperData.empty())
     {
         lg2::error("Empty CPER Data");
-        return CPER_PARSE_ERROR;
+        dumpMap[0]["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
+        dumpMap[0]["diagnosticDataType"] = "CPER";
+        dumpMap[0]["cperSeverity"] = "Unknown";
+        return logCountInd + 1;
     }
 
-    uint64_t logCountInd = 0;
     addDumpDefaults(dumpMap[logCountInd]);
 
     if (!isValid())
@@ -149,12 +153,12 @@ int CPER::prepareToLog(properties& dumpMap) const
         return logCountInd + 1;
     }
 
-    bool headerPresent = 0;
+    bool headerPresent = false;
     nlohmann::json cperHeader, headerName, headerCode, headerData;
     const auto header = cper.find("header");
     if (cper.end() != header)
     {
-        headerPresent = 1;
+        headerPresent = true;
         cperHeader = *header;
         // header has the CPER's severity & notificationType
         headerName =

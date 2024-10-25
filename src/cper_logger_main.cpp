@@ -29,15 +29,15 @@ void cperCreateLog(const std::string& cperPath)
     properties prop;
     CPER cp(cperPath);
 
-    int numSec = cp.prepareToLog(prop);
-    if (numSec == CPER_PARSE_ERROR)
+    const uint64_t numSec = cp.prepareToLog(prop);
+    if (numSec == 0)
     {
         lg2::error("Error creating log");
         return;
     }
     lg2::debug("{1} sections found", "1", numSec);
 
-    for (int i = 0; i < numSec; i++)
+    for (uint64_t i = 0; i < numSec; i++)
     {
         // Check if section[i] actually exists
         // Use for loop to log in order 0,1,.
