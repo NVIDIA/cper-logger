@@ -154,6 +154,8 @@ uint64_t CPER::prepareToLog(properties& dumpMap) const
     }
 
     bool headerPresent = false;
+    std::string time;
+
     nlohmann::json cperHeader, headerName, headerCode, headerData;
     const auto header = cper.find("header");
     if (cper.end() != header)
@@ -167,13 +169,22 @@ uint64_t CPER::prepareToLog(properties& dumpMap) const
             cperHeader.value("/severity/code"_json_pointer, nlohmann::json());
         headerData = cperHeader.value("/notificationType/guid"_json_pointer,
                                       nlohmann::json());
-
         // Invalid header fields
         if (headerName.empty() || headerCode.empty() || headerData.empty())
         {
             lg2::error("Invalid header fields in full CPER {1}", "1",
                        this->cperPath);
             return logCountInd + 1;
+        }
+
+        const auto& headerTime = cperHeader.find("timestamp");
+        if (cperHeader.end() == headerTime)
+        {
+            lg2::error("Timestamp not found in CPER record");
+        }
+        else
+        {
+            time = *headerTime;
         }
     }
     else
@@ -232,6 +243,11 @@ uint64_t CPER::prepareToLog(properties& dumpMap) const
             dumpMap[logCountInd]["cperSeverityCode"] = to_string(headerCode);
 
             dumpMap[logCountInd]["notificationType"] = headerData;
+
+            if (time.length())
+            {
+                dumpMap[logCountInd]["timestamp"] = time;
+            }
         }
 
         // sectionDescriptor has the CPER's severity & sectionType
@@ -256,7 +272,7 @@ static void asioCallback(const boost::system::error_code& ec,
 {
     if (ec)
     {
-        lg2::error("Error {1}", "1", msg.get_errno());
+        lg2::error("Error in callback {1}", "1", msg.get_errno());
     }
 }
 
