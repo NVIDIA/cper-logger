@@ -94,8 +94,15 @@ configure_file(
     install_dir: systemd_system_unit_dir,
     install: true,
 )
-
-libcper_parse_dep = dependency('libcper', required: true, fallback: 'libcper')
+inc = [include_directories('src')]
+libcper_parse_dep = dependency('libcper', required: false)
+if not libcper_parse_dep.found()
+    libcper = subproject('libcper')
+    libcper_parse_dep = libcper.get_variable('libcper_parse_dep')
+    # TODO, this really shouldn't be neccesary, but the install dir and the
+    # subproject dir are different on libcper.  Needs fixed in libcper itself.
+    inc += [include_directories('subprojects')]
+endif
 
 cper_logger_a = static_library(
     'cper_logger_a',
@@ -107,14 +114,14 @@ cper_logger_a = static_library(
         phosphor_logging,
         sdbusplus,
     ],
-    include_directories: ['src'],
+    include_directories: inc,
 )
 
 executable(
     'cper-logger',
     'src/cper_logger_main.cpp',
     dependencies: [boost, sdbusplus],
-    include_directories: ['src'],
+    include_directories: inc,
     install: true,
     link_with: [cper_logger_a],
 )
@@ -161,7 +168,7 @@ if get_option('tests').enabled()
             nlohmann_json_dep,
             sdbusplus,
         ],
-        include_directories: ['src', 'test'],
+        include_directories: inc + [include_directories('test')],
         link_with: [cper_logger_a],
     )
 
