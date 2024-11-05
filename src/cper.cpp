@@ -17,7 +17,7 @@
 
 #include "cper.hpp"
 
-#include <cper-parse-str.h>
+#include <libcper/cper-parse-str.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast/core/detail/base64.hpp>
@@ -34,7 +34,7 @@
 
 extern "C"
 {
-#include <edk/Cper.h>
+#include <libcper/Cper.h>
 }
 
 // Public functions
