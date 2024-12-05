@@ -644,6 +644,7 @@
           <Property Name="SectionLength" Type="Edm.Int64"></Property>
           <Property Name="ErrorAffinity" Type="NvidiaCPER.v1_0_0.ArmProcessorErrorAffinity"></Property>
           <Property Name="MpidrEl1" Type="Edm.Int64"></Property>
+          <Property Name="Affinity3" Type="Edm.Int64"></Property>
           <Property Name="MidrEl1" Type="Edm.Int64"></Property>
           <Property Name="Running" Type="Edm.Boolean"></Property>
           <Property Name="PsciState" Type="Edm.Int64"></Property>
