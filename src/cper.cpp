@@ -307,19 +307,6 @@ void CPER::log(const std::map<std::string, std::string>& props,
         // parameters: ssa{ss}
         "A CPER was logged", toDbusSeverity(cperSeverity), props);
 
-    // Legacy: Also send to dump-manager
-    if (!dumpData.empty())
-    {
-        conn.async_method_call(
-            // callback
-            asioCallback,
-            // dbus method: service, object, interface, method
-            "xyz.openbmc_project.Dump.Manager",
-            "/xyz/openbmc_project/dump/faultlog",
-            "xyz.openbmc_project.Dump.Create", "CreateDump",
-            // parameters: a{sv}
-            dumpData);
-    }
 }
 
 // Private funtions
