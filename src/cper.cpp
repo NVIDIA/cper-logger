@@ -306,7 +306,6 @@ void CPER::log(const std::map<std::string, std::string>& props,
         "xyz.openbmc_project.Logging.Create", "Create",
         // parameters: ssa{ss}
         "A CPER was logged", toDbusSeverity(cperSeverity), props);
-
 }
 
 // Private funtions
