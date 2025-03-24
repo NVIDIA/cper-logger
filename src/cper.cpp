@@ -60,9 +60,9 @@ int constructDiagnosticData(nlohmann::json& out, const nlohmann::json& hdr,
 }
 
 // Constructor from file
-CPER::CPER(const std::string& filename) : cperPath(filename)
+CPER::CPER(std::span<const unsigned char> data)
 {
-    readPldmFile(filename);
+    readPldmData(data);
 
 #ifdef CPER_LOGGER_DEBUG_TRACE
     if (this->jsonData.empty() || this->jsonData.is_discarded())
@@ -326,40 +326,10 @@ void CPER::readJsonFile(const std::string& filename)
 }
 #endif
 
-void CPER::readPldmFile(const std::string& filename)
+void CPER::readPldmData(std::span<const unsigned char> pldmData)
 {
     const size_t pldmHeaderSize = 4;
     const size_t sectionDescriptorSize = sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
-
-    // read the file into buffer
-    boost::beast::error_code ec;
-    boost::beast::file_posix cperFile;
-    cperFile.open(filename.c_str(), boost::beast::file_mode::read, ec);
-    if (ec || !cperFile.is_open())
-    {
-        lg2::error("Failed opening {1}", "1", filename);
-        return;
-    }
-
-    const std::streamsize pldmMaxSize = 64 << 10;
-    std::vector<uint8_t> pldmData(pldmMaxSize);
-
-    size_t bytesRead = cperFile.read(reinterpret_cast<char*>(pldmData.data()),
-                                     pldmData.size(), ec);
-    if (ec)
-    {
-        lg2::error("Failed reading {1}", "1", filename);
-        return;
-    }
-
-    cperFile.close(ec);
-    if (ec)
-    {
-        lg2::warning("Failed closing {1}", "1", filename);
-        // Ignore error
-    }
-
-    pldmData.resize(bytesRead);
 
     // 1st 4 bytes are a PLDM header, and there needs to be at least 1
     // section-descriptor

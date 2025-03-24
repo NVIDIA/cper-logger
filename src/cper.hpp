@@ -21,6 +21,7 @@
 #include <sdbusplus/asio/connection.hpp>
 
 #include <map>
+#include <span>
 #include <string>
 
 using namespace nlohmann::literals;
@@ -32,7 +33,7 @@ class CPER
 
   public:
     // Constructor to create json from file
-    CPER(const std::string& filename);
+    CPER(const std::span<const unsigned char> data);
 
     // Populate properties from json for logging
     uint64_t prepareToLog(properties& dumpData) const;
@@ -59,7 +60,7 @@ class CPER
 #endif
 
     // Load from pldmd data
-    void readPldmFile(const std::string& filename);
+    void readPldmData(std::span<const unsigned char> data);
 
     // helpers
     std::string toDbusSeverity(const std::string& severity) const;

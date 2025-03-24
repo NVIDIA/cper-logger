@@ -21,13 +21,16 @@
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
 
+#include <span>
+#include <vector>
+
 std::shared_ptr<sdbusplus::asio::connection> conn = nullptr;
 
 // CPER.Logging.CreateLog "s"
-void cperCreateLog(const std::string& cperPath)
+void cperCreateLog(const std::vector<unsigned char>& cper)
 {
     properties prop;
-    CPER cp(cperPath);
+    CPER cp(std::span<const unsigned char>(cper.data(), cper.size()));
 
     const uint64_t numSec = cp.prepareToLog(prop);
     if (numSec == 0)
