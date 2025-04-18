@@ -114,7 +114,6 @@ nlohmann::json redfishOutput(const properties& m)
 TEST(CPERTests, GoodParseCCPLEX)
 {
     properties prop;
- 
 
     CPER cp(nvidia_ccplex_good_cper);
     cp.prepareToLog(prop);
@@ -234,3 +233,10 @@ TEST(CPERTests, NullSection)
     ASSERT_FALSE(cp.isValid());
 }
 */
+
+int main(int argc, char** argv)
+{
+    //  cper_set_log_stdio();
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
