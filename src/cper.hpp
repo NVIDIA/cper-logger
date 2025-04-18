@@ -26,7 +26,7 @@
 
 using namespace nlohmann::literals;
 
-using properties = std::map<uint64_t, std::map<std::string, std::string>>;
+using properties = std::vector<std::map<std::string, std::string>>;
 
 class CPER
 {
@@ -36,7 +36,7 @@ class CPER
     CPER(const std::span<const unsigned char> data);
 
     // Populate properties from json for logging
-    uint64_t prepareToLog(properties& dumpData) const;
+    void prepareToLog(properties& dumpData) const;
     void addDumpDefaults(std::map<std::string, std::string>& log) const;
 
     // Log

@@ -38,28 +38,20 @@ extern "C"
 }
 
 // Public functions
-int constructDiagnosticData(nlohmann::json& out, const nlohmann::json& hdr,
-                            const auto secdIt, const auto secIt,
-                            const uint64_t idx)
+int constructDiagnosticData(nlohmann::json& out, const nlohmann::json& secdIt,
+                            const nlohmann::json& secIt)
 {
+    nlohmann::json::array_t arr;
+    arr.push_back(secdIt);
+    out["sectionDescriptors"] = std::move(arr);
 
-    if (secdIt == nullptr || secIt == nullptr)
-    {
-        lg2::error("Section Descriptor and Section ptrs are null");
-        return -1;
-    }
+    nlohmann::json::array_t secarr;
+    secarr.push_back(secIt);
+    out["sections"] = std::move(secarr);
 
-    out["sectionDescriptors"] = nlohmann::json::array({(*secdIt)[idx]});
-    out["sections"] = nlohmann::json::array({(*secIt)[idx]});
-
-    if (!hdr.empty())
-    {
-        out["header"] = hdr;
-    }
     return 0;
 }
 
-// Constructor from file
 CPER::CPER(std::span<const unsigned char> data)
 {
     readPldmData(data);
@@ -83,6 +75,81 @@ void CPER::addDumpDefaults(std::map<std::string, std::string>& log) const
     log["cperSeverity"] = "Unknown";
 }
 
+void readIntKey(const std::string& match, const std::string& key,
+                const nlohmann::json& obj, int64_t& valueOut)
+{
+    if (match != key)
+    {
+        return;
+    }
+    const int64_t* name = obj.get_ptr<const int64_t*>();
+    if (obj != nullptr)
+    {
+        valueOut = *name;
+    }
+}
+
+void readStrKey(const std::string& match, const std::string& key,
+                const nlohmann::json& obj, std::string& valueOut)
+{
+    if (match != key)
+    {
+        return;
+    }
+    const std::string* name = obj.get_ptr<const std::string*>();
+    if (obj != nullptr)
+    {
+        valueOut = *name;
+    }
+}
+
+struct Header
+{
+    std::string severity;
+    int64_t code = std::numeric_limits<int64_t>::max();
+    std::string notificationType;
+    std::string timestamp;
+    std::string time;
+};
+
+static Header readHeader(const nlohmann::json& headerJson)
+{
+    Header ret;
+    const nlohmann::json::object_t* headerObj =
+        headerJson.get_ptr<const nlohmann::json::object_t*>();
+    for (const auto& [key, value] : *headerObj)
+    {
+        const nlohmann::json::object_t* obj =
+            value.get_ptr<const nlohmann::json::object_t*>();
+        if (key == "severity")
+        {
+            if (obj != nullptr)
+            {
+                for (const auto& [key, value] : *obj)
+                {
+                    readStrKey("name", key, value, ret.severity);
+                    readIntKey("code", key, value, ret.code);
+                }
+            }
+        }
+        else if (key == "notificationType")
+        {
+            if (obj != nullptr)
+            {
+                for (const auto& [key, value] : *obj)
+                {
+                    readStrKey("guid", key, value, ret.notificationType);
+                }
+            }
+        }
+        else if (key == "timestamp")
+        {
+            readStrKey("timestamp", key, value, ret.time);
+        }
+    }
+    return ret;
+}
+
 /*
  *  Parses libcper output to generate dbus-formatted message
  *  Arguments:
@@ -90,34 +157,19 @@ void CPER::addDumpDefaults(std::map<std::string, std::string>& log) const
  *  Return:
  *  Number of sections parsed, CPER_PARSE_ERROR on error, CPER_PARSE_EMPTY on 0
  */
-uint64_t CPER::prepareToLog(properties& dumpMap) const
+void CPER::prepareToLog(properties& dumpMap) const
 {
-    uint64_t logCountInd = 0;
-
-    if (this->cperData.empty())
-    {
-        lg2::error("Empty CPER Data");
-        dumpMap[0]["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
-        dumpMap[0]["diagnosticDataType"] = "CPER";
-        dumpMap[0]["cperSeverity"] = "Unknown";
-        return logCountInd + 1;
-    }
-
-    addDumpDefaults(dumpMap[logCountInd]);
-
     if (!isValid())
     {
         lg2::error("CPER is invalid");
-        return logCountInd + 1;
+        return;
     }
 
-    const nlohmann::json& cper = this->jsonData;
-
-    auto sectionDescriptors = cper.find("sectionDescriptors");
-    if (sectionDescriptors == cper.end())
+    auto sectionDescriptors = jsonData.find("sectionDescriptors");
+    if (sectionDescriptors == jsonData.end())
     {
         lg2::error("Section Descriptor property not found in CPER log");
-        return logCountInd + 1;
+        return;
     }
 
     const nlohmann::json::array_t* sectionDs =
@@ -125,143 +177,93 @@ uint64_t CPER::prepareToLog(properties& dumpMap) const
     if (sectionDs == nullptr)
     {
         lg2::error("Section Descriptor property is not an array");
-        return logCountInd + 1;
+        return;
     }
-    const size_t numSec = sectionDs->size();
+    auto sectionD = sectionDs->begin();
 
-    auto sections = cper.find("sections");
-    if (sections == cper.end())
+    auto sections = jsonData.find("sections");
+    if (sections == jsonData.end())
     {
         lg2::error("Sections property not found in CPER log");
-        return logCountInd + 1;
+        return;
     }
-    const nlohmann::json::array_t* sectionArr =
+    const nlohmann::json::array_t* sectionArrs =
         sections->get_ptr<const nlohmann::json::array_t*>();
-    if (sectionArr == nullptr)
+    if (sectionArrs == nullptr)
     {
         lg2::error("Sections property is not an array");
-        return logCountInd + 1;
+        return;
     }
+    auto sectionArr = sectionArrs->begin();
 
     // Ensure sections and sectionDescriptors are same sized arrays
-    if (sectionArr->size() != numSec)
+    if (sectionArrs->size() != sectionDs->size())
     {
         lg2::error("Invalid CPER: Number of Sections and Section Descriptors "
                    "do not match");
-        return logCountInd + 1;
+        return;
     }
 
-    bool headerPresent = false;
-    std::string time;
+    Header header;
+    const auto headerJson = jsonData.find("header");
+    std::map<std::string, std::string> commonProps;
 
-    nlohmann::json cperHeader, headerName, headerCode, headerData;
-    const auto header = cper.find("header");
-    if (cper.end() != header)
+    if (headerJson == jsonData.end())
     {
-        headerPresent = true;
-        cperHeader = *header;
-        // header has the CPER's severity & notificationType
-        headerName =
-            cperHeader.value("/severity/name"_json_pointer, nlohmann::json());
-        headerCode =
-            cperHeader.value("/severity/code"_json_pointer, nlohmann::json());
-        headerData = cperHeader.value("/notificationType/guid"_json_pointer,
-                                      nlohmann::json());
-        // Invalid header fields
-        if (headerName.empty() || headerCode.empty() || headerData.empty())
-        {
-            lg2::error("Invalid header fields in full CPER {1}", "1",
-                       this->cperPath);
-            return logCountInd + 1;
-        }
-
-        const auto& headerTime = cperHeader.find("timestamp");
-        if (cperHeader.end() == headerTime)
-        {
-            lg2::error("Timestamp not found in CPER record");
-        }
-        else
-        {
-            time = *headerTime;
-        }
+        lg2::error("Absent header field, proceeding as a section log");
+        // single-section CPER
+        commonProps["diagnosticDataType"] = "CPERSection";
     }
     else
     {
-        lg2::error("Absent header field, proceeding as a section log");
+        // full CPER
+        commonProps["diagnosticDataType"] = "CPER";
+        header = readHeader(*headerJson);
+        commonProps["cperSeverity"] = header.severity;
+        commonProps["cperSeverityCode"] = std::to_string(header.code);
+        commonProps["notificationType"] = header.notificationType;
+        if (!header.time.empty())
+        {
+            commonProps["timestamp"] = header.time;
+        }
     }
 
     // Iterate over sections
-    for (; logCountInd < numSec; logCountInd++)
+    for (size_t logCountInd = 0; logCountInd < sectionDs->size(); logCountInd++)
     {
         nlohmann::json out;
-        addDumpDefaults(dumpMap[logCountInd]);
-        if (constructDiagnosticData(out, cperHeader, sectionDs, sectionArr,
-                                    logCountInd))
-        {
-            lg2::error("Could not construct CPER data for section {1}", "1",
-                       logCountInd);
-            continue;
-        }
-        std::string jStr = out.dump();
-        jStr.erase(std::remove(jStr.begin(), jStr.end(), '='), jStr.end());
-        dumpMap[logCountInd]["jsonDiagnosticData"] = jStr;
 
-        if (!headerPresent)
+        auto& entry = dumpMap.emplace_back();
+        for (const auto& [key, value] : commonProps)
         {
-            // single-section CPER
-            dumpMap[logCountInd]["diagnosticDataType"] = "CPERSection";
-
-            // sectionDescriptor has the CPER's severity & sectionType
-            nlohmann::json name = (*sectionDs)[logCountInd].value(
-                "/severity/name"_json_pointer, nlohmann::json());
-            nlohmann::json code = (*sectionDs)[logCountInd].value(
-                "/severity/code"_json_pointer, nlohmann::json());
-            nlohmann::json data = (*sectionDs)[logCountInd].value(
-                "/notificationType/data"_json_pointer, nlohmann::json());
-            if (!name.empty() && !code.empty() && !data.empty())
-            {
-                dumpMap[logCountInd]["cperSeverity"] = name;
-                dumpMap[logCountInd]["cperSeverityCode"] = to_string(code);
-                dumpMap[logCountInd]["notificationType"] = data;
-            }
-            else
-            {
-                lg2::error("Invalid full CPER {1}", "1", this->cperPath);
-                continue;
-            }
+            entry[key] = value;
         }
 
-        else
+        entry["diagnosticData"] = toBase64String(this->cperData);
+        entry["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
+
+        if (constructDiagnosticData(out, *sectionD, *sectionArr))
         {
-            // full CPER
-            dumpMap[logCountInd]["diagnosticDataType"] = "CPER";
-
-            dumpMap[logCountInd]["cperSeverity"] = headerName;
-
-            dumpMap[logCountInd]["cperSeverityCode"] = to_string(headerCode);
-
-            dumpMap[logCountInd]["notificationType"] = headerData;
-
-            if (time.length())
-            {
-                dumpMap[logCountInd]["timestamp"] = time;
-            }
+            lg2::error("Could not construct CPER data for section.");
         }
+        entry["jsonDiagnosticData"] = out.dump(4, ' ');
 
         // sectionDescriptor has the CPER's severity & sectionType
-        nlohmann::json stype = (*sectionDs)[logCountInd].value(
-            "/sectionType/data"_json_pointer, nlohmann::json());
-        if (!stype.empty())
+
+        std::string stype =
+            sectionD->value("/sectionType/data"_json_pointer, "");
+        if (stype.empty())
         {
-            dumpMap[logCountInd]["sectionType"] = stype;
+            lg2::error("sectionType property not found");
         }
         else
         {
-            lg2::error("sectionType property not found");
-            continue;
+            entry["sectionType"] = stype;
         }
+
+        sectionD++;
+        sectionArr++;
     }
-    return logCountInd;
 }
 
 // Callback function

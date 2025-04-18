@@ -32,27 +32,18 @@ void cperCreateLog(const std::vector<unsigned char>& cper)
     properties prop;
     CPER cp(std::span<const unsigned char>(cper.data(), cper.size()));
 
-    const uint64_t numSec = cp.prepareToLog(prop);
-    if (numSec == 0)
+    cp.prepareToLog(prop);
+    if (prop.empty())
     {
         lg2::error("Error creating log");
         return;
     }
-    lg2::debug("{1} sections found", "1", numSec);
+    lg2::debug("{1} sections found", "1", prop.size());
 
-    for (uint64_t i = 0; i < numSec; i++)
+    for (const auto& section : prop)
     {
-        // Check if section[i] actually exists
-        // Use for loop to log in order 0,1,.
-        // The below find() is a guardrail
-        auto it = prop.find(i);
-        if (it == prop.end())
-        {
-            lg2::error("Section with index {1} does not exist", "1", i);
-            break;
-        }
         // Handle multiple cper sections
-        cp.log(it->second, *conn.get());
+        cp.log(section, *conn.get());
     }
 }
 

@@ -56,32 +56,32 @@ std::string writeTempfile(const unsigned char* data, unsigned int size,
     return fileName;
 }
 
-void parseOut(const std::map<std::string, std::string>& m,
-              const nlohmann::json& array, nlohmann::json::object_t& jFlat)
+struct Keypair
 {
-    for (const auto& item : array)
-    {
-        const auto& cf = item.find("from");
-        const auto& ct = item.find("to");
-        if (item.end() == cf || item.end() == ct)
-        {
-            continue;
-        }
+    std::string_view from;
+    std::string_view to;
+    bool json = false;
+};
 
-        const auto& f = m.find(*cf);
+void parseOut(const std::map<std::string, std::string>& m,
+              const std::span<Keypair>& array, nlohmann::json::object_t& jFlat)
+{
+    for (const auto& element : array)
+    {
+        const auto& f = m.find(std::string(element.from));
         if (m.end() == f)
         {
             continue;
         }
 
-        const auto& cj = item.find("json");
-        if (item.end() == cj || cj->get<bool>() == false)
+        bool cj = element.json;
+        if (cj == false)
         {
-            jFlat[*ct] = f->second;
+            jFlat[std::string(element.to)] = f->second;
             continue;
         }
 
-        auto prefix = ct->dump();
+        std::string prefix(element.to);
         prefix.erase(std::remove(prefix.begin(), prefix.end(), '\"'),
                      prefix.end());
 
@@ -93,20 +93,20 @@ void parseOut(const std::map<std::string, std::string>& m,
     }
 }
 
-nlohmann::json redfishOutput(const properties& m)
+std::vector<nlohmann::json::object_t> redfishOutput(const properties& m)
 {
-    nlohmann::json config =
-        R"({ "redfishProperties": [ { "from": "REDFISH_MESSAGE_ID", "to": "/MessageId" }, { "from": "diagnosticData", "to": "/DiagnosticData" }, { "from": "diagnosticDataType", "to": "/DiagnosticDataType" }, { "from": "notificationType", "to": "/CPER/NotificationType" }, { "from": "sectionType", "to": "/CPER/SectionType" }, { "from": "jsonDiagnosticData", "to": "/CPER/Oem/Nvidia", "json": true } ]})"_json;
+    std::array<Keypair, 6> redfishConfig = {
+        {{"REDFISH_MESSAGE_ID", "/MessageId"},
+         {"diagnosticData", "/DiagnosticData"},
+         {"diagnosticDataType", "/DiagnosticDataType"},
+         {"notificationType", "/CPER/NotificationType"},
+         {"sectionType", "/CPER/SectionType"},
+         {"jsonDiagnosticData", "/CPER/Oem/Nvidia", true}}};
 
-    const auto redfishConfig = config.find("redfishProperties");
-    EXPECT_NE(redfishConfig, config.end());
-
-    nlohmann::json::object_t jOut;
+    std::vector<nlohmann::json::object_t> jOut;
     for (const auto& it : m)
     {
-        parseOut(it.second, *redfishConfig, jOut);
-        // We only want to validate the first section for now
-        return jOut;
+        parseOut(it, redfishConfig, jOut.emplace_back());
     }
     return jOut;
 }
@@ -115,124 +115,101 @@ TEST(CPERTests, GoodParseCCPLEX)
 {
     properties prop;
 
-    CPER cp(nvidia_ccplex_good_cper);
+    CPER cp(nvidiaCcplexGoodCper);
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
     EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
     EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
-    nlohmann::json rf = redfishOutput(prop);
-    std::cout << rf << '\n';
+    std::vector<nlohmann::json::object_t> rf = redfishOutput(prop);
+
+    // std::cout << nlohmann::json(rf[2]).dump(4, ' ') << '\n';
+
+    // TODO NEED TO ASSERT index 1-3
+    ASSERT_EQ(prop.size(), 5);
+
     // TODO BUG
     EXPECT_EQ(
-        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
+        rf[0]["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "NVIDIA");
-    EXPECT_EQ(rf["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
+    EXPECT_EQ(rf[0]["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
               "CCPLEXSCF");
-    EXPECT_EQ(rf["/CPER/NotificationType"],
+    EXPECT_EQ(rf[0]["/CPER/NotificationType"],
               "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
 
 TEST(CPERTests, GoodParsePCIe)
 {
-<<<<<<< HEAD
-    const auto file = writeTempfile(pcieGoodCper, pcieGoodCperLen, "pcie-good");
-
-||||||| parent of f614f1c (Fix unit tests)
-    const auto file =
-        writeTempfile(pcie_good_cper, pcie_good_cper_len, "pcie-good");
-
-=======
->>>>>>> f614f1c (Fix unit tests)
     properties prop;
-    CPER cp(pcie_good_cper);
+    CPER cp(pcieGoodCper);
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
     EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
     EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
-    nlohmann::json rf = redfishOutput(prop);
+    std::vector<nlohmann::json::object_t> rf = redfishOutput(prop);
+    ASSERT_EQ(prop.size(), 1);
     EXPECT_EQ(
-        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
+        rf[0]["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "PCIe");
-    EXPECT_EQ(rf["/CPER/NotificationType"],
+    EXPECT_EQ(rf[0]["/CPER/NotificationType"],
               "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
 
 TEST(CPERTests, FailParse)
 {
-<<<<<<< HEAD
-    const auto file = writeTempfile(nvidiaCcplexBadCper, nvidiaCcplexBadCperLen,
-                                    "nvidia-ccplex-bad");
-
-||||||| parent of f614f1c (Fix unit tests)
-    const auto file =
-        writeTempfile(nvidia_ccplex_bad_cper, nvidia_ccplex_bad_cper_len,
-                      "nvidia-ccplex-bad");
-
-=======
->>>>>>> f614f1c (Fix unit tests)
     properties prop;
-    CPER cp(nvidia_ccplex_bad_cper);
+    CPER cp(nvidiaCcplexBadCper);
     cp.prepareToLog(prop);
     ASSERT_FALSE(cp.isValid());
-
-    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
-    EXPECT_EQ(prop[0]["cperSeverity"], "Unknown");
+    ASSERT_EQ(prop.size(), 0);
 }
 
 TEST(CPERTests, MultiSeverity)
 {
-<<<<<<< HEAD
-    const auto file = writeTempfile(nvidiaCcplexMultiseverityCper,
-                                    nvidiaCcplexMultiseverityCperLen,
-                                    "nvidia-ccplex-multiseverity");
-
-||||||| parent of f614f1c (Fix unit tests)
-    const auto file = writeTempfile(nvidia_ccplex_multiseverity_cper,
-                                    nvidia_ccplex_multiseverity_cper_len,
-                                    "nvidia-ccplex-multiseverity");
-
-=======
->>>>>>> f614f1c (Fix unit tests)
     properties prop;
-    CPER cp(nvidia_ccplex_multiseverity_cper);
+    CPER cp(nvidiaCcplexMultiseverityCper);
+    cp.prepareToLog(prop);
+    ASSERT_TRUE(cp.isValid());
+
+    // TODO NEED TO ASSERT index 1-4
+    ASSERT_EQ(prop.size(), 5);
+
+    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
+    std::vector<nlohmann::json::object_t> rf = redfishOutput(prop);
+    EXPECT_EQ(
+        rf[0]["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
+        "NVIDIA");
+    EXPECT_EQ(rf[0]["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
+              "CCPLEXSCF");
+    EXPECT_EQ(rf[0]["/CPER/NotificationType"],
+              "09a9d5ac-5204-4214-96e5-94992e752bcd");
+    // std::cout << nlohmann::json(rf[1]).dump(4, ' ') << '\n';
+}
+
+TEST(CPERTests, NullSection)
+{
+    properties prop;
+    CPER cp(nvidiaCcplexNullsectionCper);
     cp.prepareToLog(prop);
     ASSERT_TRUE(cp.isValid());
 
     EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
+    // This is a BUG with this CPER
     EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
-    nlohmann::json rf = redfishOutput(prop);
+    std::vector<nlohmann::json::object_t> rf = redfishOutput(prop);
+
+    // TODO NEED TO ASSERT index 1-3
+    ASSERT_EQ(prop.size(), 4);
     EXPECT_EQ(
-        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
+        rf[0]["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
         "NVIDIA");
-    EXPECT_EQ(rf["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
+    EXPECT_EQ(rf[0]["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
               "CCPLEXSCF");
-    EXPECT_EQ(rf["/CPER/NotificationType"],
+    EXPECT_EQ(rf[0]["/CPER/NotificationType"],
               "09a9d5ac-5204-4214-96e5-94992e752bcd");
 }
-
-/*
-TEST(CPERTests, NullSection)
-{
-<<<<<<< HEAD
-    const auto file = writeTempfile(nvidiaCcplexNullsectionCper,
-                                    nvidiaCcplexNullsectionCperLen,
-                                    "nvidia-ccplex-nullsection");
-
-||||||| parent of f614f1c (Fix unit tests)
-    const auto file = writeTempfile(nvidia_ccplex_nullsection_cper,
-                                    nvidia_ccplex_nullsection_cper_len,
-                                    "nvidia-ccplex-nullsection");
-
-=======
->>>>>>> f614f1c (Fix unit tests)
-    properties prop;
-    CPER cp(nvidia_ccplex_nullsection_cper);
-    cp.prepareToLog(prop);
-    ASSERT_FALSE(cp.isValid());
-}
-*/
 
 int main(int argc, char** argv)
 {
