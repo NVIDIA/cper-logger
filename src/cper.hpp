@@ -46,7 +46,7 @@ class CPER
     // Get
     bool isValid() const
     {
-        return jsonValid;
+        return jsonData.is_object();
     }
     const nlohmann::json& getJson() const
     {
@@ -74,6 +74,5 @@ class CPER
 
     // cper json
     nlohmann::json jsonData;
-    bool jsonValid;
 
 }; // class

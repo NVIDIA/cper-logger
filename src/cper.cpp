@@ -71,8 +71,6 @@ CPER::CPER(std::span<const unsigned char> data)
         readJsonFile(filename);
     }
 #endif
-    this->jsonValid =
-        !(this->jsonData.empty() || this->jsonData.is_discarded());
 }
 
 void CPER::addDumpDefaults(std::map<std::string, std::string>& log) const
@@ -347,28 +345,26 @@ void CPER::readPldmData(std::span<const unsigned char> pldmData)
         return;
     }
 
-    size_t len = le16toh(pldmData[3] << 8 | pldmData[2]);
-    if (pldmData.size() - pldmHeaderSize < len)
-    {
-        lg2::error("Invalid CPER: Got length {1}", "1", len);
-        return;
-    }
-
     // copy the CPER binary for encoding later
-    this->cperData.assign(pldmData.begin() + pldmHeaderSize, pldmData.end());
-
+    cperData.assign(pldmData.begin() + pldmHeaderSize, pldmData.end());
+    std::cout << "cperData " << std::to_string(cperData.size()) << "\n";
     // parse to json as char* from libcper
-    std::unique_ptr<char, void (*)(void*)> jstr(
-        type ? cperbuf_single_section_to_str_ir(this->cperData.data(),
-                                                this->cperData.size())
-             : cperbuf_to_str_ir(this->cperData.data(), this->cperData.size()),
-        free);
-    if (nullptr == jstr)
+    char* raw = nullptr;
+    if (type)
+    {
+        raw =
+            cperbuf_single_section_to_str_ir(cperData.data(), cperData.size());
+    }
+    else
+    {
+        raw = cperbuf_to_str_ir(cperData.data(), cperData.size());
+    }
+    if (raw == nullptr)
     {
         lg2::error("Failed parsing cper data");
         return;
     }
-
+    std::unique_ptr<char, void (*)(void*)> jstr(raw, free);
     this->jsonData = nlohmann::json::parse(jstr.get(), nullptr, false);
 }
 
