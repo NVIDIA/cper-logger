@@ -5,7 +5,7 @@ project(
     default_options: [
         'warning_level=3',
         'werror=true',
-        'cpp_std=c++20',
+        'cpp_std=c++23',
         # note: This is allowed in certain contexts, but provides binary size
         # improvements for loggerlications that don't require rtti
         'cpp_rtti=false',
@@ -16,8 +16,8 @@ project(
 )
 
 # Validate the c++ Standard
-if get_option('cpp_std') != 'c++20'
-    error('This project requires c++20 support')
+if get_option('cpp_std') != 'c++23'
+    error('This project requires c++23 support')
 endif
 
 boost = dependency(
@@ -120,7 +120,7 @@ cper_logger_a = static_library(
 executable(
     'cper-logger',
     'src/cper_logger_main.cpp',
-    dependencies: [boost, sdbusplus],
+    dependencies: [boost, sdbusplus, phosphor_logging],
     include_directories: inc,
     install: true,
     link_with: [cper_logger_a],
