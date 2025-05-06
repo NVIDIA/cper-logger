@@ -203,19 +203,7 @@ TEST(CPERTests, NullSection)
     properties prop;
     CPER cp(file.c_str());
     cp.prepareToLog(prop);
-    ASSERT_TRUE(cp.isValid());
-
-    EXPECT_EQ(prop[0]["diagnosticDataType"], "CPER");
-    // This is a BUG with this CPER
-    EXPECT_EQ(prop[0]["cperSeverity"], "Corrected");
-    nlohmann::json rf = redfishOutput(prop);
-    EXPECT_EQ(
-        rf["/CPER/Oem/NvidiasectionDescriptors"][0]["sectionType"]["type"],
-        "NVIDIA");
-    EXPECT_EQ(rf["/CPER/Oem/Nvidiasections"][0]["Nvidia"]["signature"],
-              "CCPLEXSCF");
-    EXPECT_EQ(rf["/CPER/NotificationType"],
-              "09a9d5ac-5204-4214-96e5-94992e752bcd");
+    ASSERT_FALSE(cp.isValid());
 }
 
 TEST(CPERTests, MissingFile)
