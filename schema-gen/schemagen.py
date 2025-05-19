@@ -28,7 +28,7 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
   </edmx:Reference>
   <edmx:DataServices>
     <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER"> </Schema>
-    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER.v1_0_0">
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER.v0_7_0">
 """
 FOOTER = """
     </Schema>
@@ -184,10 +184,10 @@ class JsontoXml:
             "Unknown",
             "CacheError",
             "TlbError",
+            "BusError",
         ]
         # Skips properties from being added to XML
-        self.skip_props = ["armprocessorerrorinfoerrorinformation"]
-        # ["GenericProcessor"]
+        self.skip_props = []
 
     def jsonschema_to_xml(self, schema, basetype, baseid, prevproperty=""):
         """
@@ -202,12 +202,10 @@ class JsontoXml:
         if self.debug:
             print("\n\n\n\n")
             print(json.dumps(schema, indent=1))
-
         if isinstance(schema, dict):
             req = schema.get("required")
-            if req:
+            if req is not None:
                 assert isinstance(req, list), "request field is not a list"
-
                 if (baseid + basetype).lower() == "errorstatuserrortype":
                     if not self.error_status_present:
                         self.error_status_present = True
@@ -215,6 +213,7 @@ class JsontoXml:
                         return ("", "")
 
                 props = schema.get("properties")
+
                 if not props:
                     print(
                         "'Required' field was found. 'Properties' field not found for: \n",
@@ -252,6 +251,8 @@ class JsontoXml:
                     baseid += prevproperty
 
                 xml_ret = ""
+                if basetype in self.skip_idprop:
+                    baseid += basetype
                 for prop, propval in props.items():
                     if self.required and (prop not in req):
                         continue
@@ -392,6 +393,8 @@ class JsontoXml:
             return "CacheError"
         if ret == "Tlberror":
             return "TlbError"
+        if ret == "Buserror":
+            return "BusError"
         return ret
 
     def handle_errorinfo(self, baseid, basetype):
@@ -471,10 +474,11 @@ class JsontoXml:
         return xml + arg
 
     def validate_xml(self, xmlf):
+        print("Validating XML")
         entity_names = []
         with open(xmlf, "r") as f:
             for line in f:
-                if "EntityType Name" in line:
+                if "ComplexType Name" in line:
                     name = line.strip().split("=")[1]
                     if name in entity_names:
                         print("Duplicate: ", name)
@@ -630,7 +634,7 @@ def main():
         if args.parent_basetype:
             parent_basetype = args.parent_basetype[0]
         else:
-            parent_basetype = "NvidiaCPER.v1_0_0"
+            parent_basetype = "NvidiaCPER.v0_7_0"
 
         if args.argstart:
             argstart = args.argstart[0]
@@ -679,7 +683,7 @@ def main():
         if args.parent_basetype:
             parent_basetype = args.parent_basetype[0]
         else:
-            parent_basetype = "NvidiaCPER.v1_0_0"
+            parent_basetype = "NvidiaCPER.v0_7_0"
 
         if args.argstart:
             argstart = args.argstart[0]
@@ -697,10 +701,6 @@ def main():
             start_property=argstart,
         )
 
-        if args.validate:
-            xml_obj.validate_xml(master_schema)
-            exit(0)
-
         output = xml_obj.schema_parser(master_schema)
 
         out_file = "NvidiaCPER_v1.xml"
@@ -708,6 +708,10 @@ def main():
         print("Output filename: ", out_file)
         with open(out_file, "w") as f:
             print(output, file=f)
+
+        if args.validate:
+            xml_obj.validate_xml(out_file)
+            exit(0)
 
     else:
         exit(1)
