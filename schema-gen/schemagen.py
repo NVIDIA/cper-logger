@@ -17,7 +17,9 @@ import argparse
 import json
 import os
 
-HEADER = """<?xml version="1.0" encoding="UTF-8"?>
+version = "v0_8_0"
+
+HEADER = f"""<?xml version="1.0" encoding="UTF-8"?>
 <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
   <edmx:Reference Uri="http://docs.oasis-open.org/odata/odata/v4.0/errata03/csd01/complete/vocabularies/Org.OData.Core.V1.xml">
     <edmx:Include Namespace="Org.OData.Core.V1" Alias="OData"/>
@@ -28,8 +30,8 @@ HEADER = """<?xml version="1.0" encoding="UTF-8"?>
   </edmx:Reference>
   <edmx:DataServices>
     <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER"> </Schema>
-    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER.v0_7_0">
-"""
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="NvidiaCPER.{version}">"""
+
 FOOTER = """
     </Schema>
   </edmx:DataServices>
@@ -634,7 +636,7 @@ def main():
         if args.parent_basetype:
             parent_basetype = args.parent_basetype[0]
         else:
-            parent_basetype = "NvidiaCPER.v0_7_0"
+            parent_basetype = "NvidiaCPER." + version
 
         if args.argstart:
             argstart = args.argstart[0]
@@ -683,7 +685,7 @@ def main():
         if args.parent_basetype:
             parent_basetype = args.parent_basetype[0]
         else:
-            parent_basetype = "NvidiaCPER.v0_7_0"
+            parent_basetype = "NvidiaCPER." + version
 
         if args.argstart:
             argstart = args.argstart[0]
