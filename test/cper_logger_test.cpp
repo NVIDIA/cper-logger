@@ -114,7 +114,7 @@ nlohmann::json redfishOutput(const properties& m)
 TEST(CPERTests, GoodParseCCPLEX)
 {
     const auto file =
-        writeTempfile(nvidia_ccplex_good_cper, nvidia_ccplex_good_cper_len,
+        writeTempfile(nvidiaCcplexGoodCper, nvidiaCcplexGoodCperLen,
                       "nvidia-ccplex-good");
 
     properties prop;
@@ -139,7 +139,7 @@ TEST(CPERTests, GoodParseCCPLEX)
 TEST(CPERTests, GoodParsePCIe)
 {
     const auto file =
-        writeTempfile(pcie_good_cper, pcie_good_cper_len, "pcie-good");
+        writeTempfile(pcieGoodCper, pcieGoodCperLen, "pcie-good");
 
     properties prop;
     CPER cp(file.c_str());
@@ -159,7 +159,7 @@ TEST(CPERTests, GoodParsePCIe)
 TEST(CPERTests, FailParse)
 {
     const auto file =
-        writeTempfile(nvidia_ccplex_bad_cper, nvidia_ccplex_bad_cper_len,
+        writeTempfile(nvidiaCcplexBadCper, nvidiaCcplexBadCperLen,
                       "nvidia-ccplex-bad");
 
     properties prop;
@@ -173,8 +173,8 @@ TEST(CPERTests, FailParse)
 
 TEST(CPERTests, MultiSeverity)
 {
-    const auto file = writeTempfile(nvidia_ccplex_multiseverity_cper,
-                                    nvidia_ccplex_multiseverity_cper_len,
+    const auto file = writeTempfile(nvidiaCcplexMultiseverityCper,
+                                    nvidiaCcplexMultiseverityCperLen,
                                     "nvidia-ccplex-multiseverity");
 
     properties prop;
@@ -196,8 +196,8 @@ TEST(CPERTests, MultiSeverity)
 
 TEST(CPERTests, NullSection)
 {
-    const auto file = writeTempfile(nvidia_ccplex_nullsection_cper,
-                                    nvidia_ccplex_nullsection_cper_len,
+    const auto file = writeTempfile(nvidiaCcplexNullsectionCper,
+                                    nvidiaCcplexNullsectionCperLen,
                                     "nvidia-ccplex-nullsection");
 
     properties prop;
