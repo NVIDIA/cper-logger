@@ -235,6 +235,92 @@
           <Property Name="Overflow" Type="Edm.Boolean"></Property>
       </ComplexType>
 
+      <ComplexType Name="ArmProcessorTransactionType">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorOperation">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorCacheError">
+          <Property Name="TransactionType" Type="NvidiaCPER.v0_8_0.ArmProcessorTransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v0_8_0.ArmProcessorOperation"></Property>
+          <Property Name="Level" Type="Edm.Int64"></Property>
+          <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
+          <Property Name="Corrected" Type="Edm.Boolean"></Property>
+          <Property Name="PrecisePC" Type="Edm.Boolean"></Property>
+          <Property Name="RestartablePC" Type="Edm.Boolean"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorTransactionType">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorOperation">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorTlbError">
+          <Property Name="TransactionType" Type="NvidiaCPER.v0_8_0.ArmProcessorTransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v0_8_0.ArmProcessorOperation"></Property>
+          <Property Name="Level" Type="Edm.Int64"></Property>
+          <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
+          <Property Name="Corrected" Type="Edm.Boolean"></Property>
+          <Property Name="PrecisePC" Type="Edm.Boolean"></Property>
+          <Property Name="RestartablePC" Type="Edm.Boolean"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorTransactionType">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorOperation">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorParticipationType">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorAddressSpace">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorAccessMode">
+          <Property Name="Name" Type="Edm.String"></Property>
+          <Property Name="Value" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorBusError">
+          <Property Name="TransactionType" Type="NvidiaCPER.v0_8_0.ArmProcessorTransactionType"></Property>
+          <Property Name="Operation" Type="NvidiaCPER.v0_8_0.ArmProcessorOperation"></Property>
+          <Property Name="Level" Type="Edm.Int64"></Property>
+          <Property Name="ProcessorContextCorrupt" Type="Edm.Boolean"></Property>
+          <Property Name="Corrected" Type="Edm.Boolean"></Property>
+          <Property Name="PrecisePC" Type="Edm.Boolean"></Property>
+          <Property Name="RestartablePC" Type="Edm.Boolean"></Property>
+          <Property Name="TimedOut" Type="Edm.Boolean"></Property>
+          <Property Name="ParticipationType" Type="NvidiaCPER.v0_8_0.ArmProcessorParticipationType"></Property>
+          <Property Name="AddressSpace" Type="NvidiaCPER.v0_8_0.ArmProcessorAddressSpace"></Property>
+          <Property Name="AccessMode" Type="NvidiaCPER.v0_8_0.ArmProcessorAccessMode"></Property>
+          <Property Name="MemoryAttributes" Type="Edm.Int64"></Property>
+      </ComplexType>
+
+      <ComplexType Name="ArmProcessorErrorInformation">
+          <Property Name="CacheError" Type="NvidiaCPER.v0_8_0.ArmProcessorCacheError"></Property>
+          <Property Name="TlbError" Type="NvidiaCPER.v0_8_0.ArmProcessorTlbError"></Property>
+          <Property Name="BusError" Type="NvidiaCPER.v0_8_0.ArmProcessorBusError"></Property>
+      </ComplexType>
+
       <ComplexType Name="ArmProcessorErrorInfo">
           <Property Name="Version" Type="Edm.Int64"></Property>
           <Property Name="Length" Type="Edm.Int64"></Property>
