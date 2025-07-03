@@ -5,6 +5,11 @@ StopWhenUnneeded=false
 [Service]
 Restart=always
 RestartSec=5
+
+# Old versions of cper logger wrote files to disk.
+# Clean them up.  Can be removed for non gb200 platforms.
+ExecStartPre=rm -rf /var/cper
+
 ExecStart=@INSTALL_PREFIX@/bin/cper-logger
 SyslogIdentifier=cper-logger
 Type=dbus

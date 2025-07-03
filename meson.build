@@ -129,7 +129,6 @@ executable(
 if get_option('tests').enabled()
     gtest_dep = dependency(
         'gtest',
-        main: true,
         disabler: true,
         required: false,
         include_type: 'system',
@@ -147,7 +146,6 @@ if get_option('tests').enabled()
                 dependencies: [
                     dependency('threads'),
                     gtest_proj.dependency('gtest'),
-                    gtest_proj.dependency('gtest_main'),
                 ],
             )
             gmock_dep = gtest_proj.dependency('gmock')
@@ -167,6 +165,7 @@ if get_option('tests').enabled()
             gtest_dep,
             nlohmann_json_dep,
             sdbusplus,
+            phosphor_logging,
         ],
         include_directories: inc + [include_directories('test')],
         link_with: [cper_logger_a],
