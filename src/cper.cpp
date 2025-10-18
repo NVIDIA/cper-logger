@@ -83,7 +83,7 @@ void readIntKey(const std::string& match, const std::string& key,
         return;
     }
     const int64_t* name = obj.get_ptr<const int64_t*>();
-    if (obj != nullptr)
+    if (name != nullptr)
     {
         valueOut = *name;
     }
@@ -97,7 +97,7 @@ void readStrKey(const std::string& match, const std::string& key,
         return;
     }
     const std::string* name = obj.get_ptr<const std::string*>();
-    if (obj != nullptr)
+    if (name != nullptr)
     {
         valueOut = *name;
     }
