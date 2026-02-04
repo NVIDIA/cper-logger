@@ -164,7 +164,9 @@ class JsontoXml:
         self.required = required
         self.start_property = start_property
         self.error_status_present = False
+
         # Resolves $id and property duplications
+        # These properties are also cast into baseid to prevent duplications
         self.skip_idprop = [
             "GenericProcessor",
             "Ia32X64Processor",
@@ -184,9 +186,16 @@ class JsontoXml:
             "Nvidia",
             "Ampere",
             "Unknown",
-            "CacheError",
-            "TlbError",
-            "BusError",
+            "cacheError",
+            "tlbError",
+            "busError",
+        ]
+        # Properties that are repeatable in the XML schema
+        # But have unique parents, like TransactionType and Operation
+        # The baseid
+        self.repeatable_props = [
+            "TransactionType",
+            "Operation",
         ]
         # Skips properties from being added to XML
         self.skip_props = []
@@ -198,6 +207,7 @@ class JsontoXml:
             schema (string): Original json schema file as a string
             basetype (string): Parent data type of property. Use same as parent_basetype if the entire json schema is being used.
             baseid (string): Reference to closest ancestor $id property. This is used to provide unique namespaces to repeatable properties.
+            baseid is also concatenated with self.skip_idprop. This will recursively extend as we go deeper into the schema.
         Returns:
             result (string): XML schema for CPER output
         """
@@ -253,8 +263,9 @@ class JsontoXml:
                     baseid += prevproperty
 
                 xml_ret = ""
+                # Even without $id, this can populate baseid
                 if basetype in self.skip_idprop:
-                    baseid += basetype
+                    baseid += basetype[0].upper() + basetype[1:]
                 for prop, propval in props.items():
                     if self.required and (prop not in req):
                         continue
