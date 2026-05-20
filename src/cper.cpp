@@ -82,11 +82,35 @@ void readIntKey(const std::string& match, const std::string& key,
     {
         return;
     }
-    const int64_t* name = obj.get_ptr<const int64_t*>();
-    if (name != nullptr)
+    // nlohmann::parse() could return either int or uint; try both.
+    const int64_t* vInt = obj.get_ptr<const int64_t*>();
+    if (vInt != nullptr)
     {
-        valueOut = *name;
+        valueOut = *vInt;
+        return;
     }
+    const uint64_t* vUint = obj.get_ptr<const uint64_t*>();
+    if (vUint != nullptr)
+    {
+        if (std::in_range<int64_t>(*vUint))
+        {
+            valueOut = static_cast<int64_t>(*vUint);
+        }
+        else
+        {
+            lg2::error(
+                "uint key {1} value {2} out of int64 range, defaulting to 3",
+                "1", key, "2", *vUint);
+            valueOut = 3;
+        }
+        return;
+    }
+    // default to 3 (Informational)
+    valueOut = 3;
+    lg2::error(
+        "Failed to read int key {1} from {2}, defaulting to 3 (Informational)",
+        "1", key, "2",
+        obj.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
 }
 
 void readStrKey(const std::string& match, const std::string& key,
@@ -100,6 +124,12 @@ void readStrKey(const std::string& match, const std::string& key,
     if (name != nullptr)
     {
         valueOut = *name;
+    }
+    else
+    {
+        lg2::error(
+            "Failed to read str key {1} from {2}", "1", key, "2",
+            obj.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
     }
 }
 
@@ -246,7 +276,8 @@ void CPER::prepareToLog(properties& dumpMap) const
         {
             lg2::error("Could not construct CPER data for section.");
         }
-        entry["jsonDiagnosticData"] = out.dump(4, ' ');
+        entry["jsonDiagnosticData"] =
+            out.dump(4, ' ', false, nlohmann::json::error_handler_t::replace);
 
         // sectionDescriptor has the CPER's severity & sectionType
 
