@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION &
+ * SPDX-FileCopyrightText: Copyright (c) 2023-2026 NVIDIA CORPORATION &
  * AFFILIATES. All rights reserved. SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,10 +26,13 @@
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 
+#include <array>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <optional>
+#include <string_view>
 #include <utility>
 
 extern "C"
@@ -37,20 +40,219 @@ extern "C"
 #include <libcper/Cper.h>
 }
 
-// Public functions
+namespace
+{
+
+struct FlagMapping
+{
+    const char* source;
+    const char* redfish;
+};
+
+constexpr std::array<FlagMapping, 8> sectionFlagMappings = {{
+    {"primary", "Primary"},
+    {"containmentWarning", "ContainmentWarning"},
+    {"reset", "Reset"},
+    {"errorThresholdExceeded", "ErrorThresholdExceeded"},
+    {"resourceNotAccessible", "ResourceNotAccessible"},
+    {"latentError", "LatentError"},
+    {"propagated", "Propagated"},
+    {"overflow", "Overflow"},
+}};
+
+std::optional<uint64_t> getUnsigned(const nlohmann::json& value)
+{
+    const uint64_t* unsignedValue = value.get_ptr<const uint64_t*>();
+    if (unsignedValue != nullptr)
+    {
+        return *unsignedValue;
+    }
+
+    const int64_t* signedValue = value.get_ptr<const int64_t*>();
+    if (signedValue != nullptr && *signedValue >= 0)
+    {
+        return static_cast<uint64_t>(*signedValue);
+    }
+
+    return std::nullopt;
+}
+
+void logInvalidMetadata(std::string_view field)
+{
+    lg2::error("Invalid CPER metadata field {1}", "1", field);
+}
+
+void addRecordMetadata(nlohmann::json& metadata, const nlohmann::json& header)
+{
+    const auto revision = header.find("revision");
+    if (revision == header.end() || !revision->is_object())
+    {
+        logInvalidMetadata("header.revision");
+    }
+    else
+    {
+        const auto major = revision->find("major");
+        const auto minor = revision->find("minor");
+        if (major != revision->end() && minor != revision->end() &&
+            major->is_number_integer() && minor->is_number_integer())
+        {
+            metadata["CPERRevision"] = {
+                {"Major", *major},
+                {"Minor", *minor},
+            };
+        }
+        else
+        {
+            logInvalidMetadata("header.revision");
+        }
+    }
+
+    const auto partitionID = header.find("partitionID");
+    if (partitionID != header.end())
+    {
+        if (partitionID->is_string())
+        {
+            metadata["PartitionID"] = *partitionID;
+        }
+        else
+        {
+            logInvalidMetadata("header.partitionID");
+        }
+    }
+
+    const auto creatorID = header.find("creatorID");
+    if (creatorID == header.end() || !creatorID->is_string())
+    {
+        logInvalidMetadata("header.creatorID");
+    }
+    else
+    {
+        metadata["CreatorID"] = *creatorID;
+    }
+
+    const auto notificationType = header.find("notificationType");
+    if (notificationType == header.end() || !notificationType->is_object())
+    {
+        logInvalidMetadata("header.notificationType.type");
+    }
+    else
+    {
+        const auto type = notificationType->find("type");
+        if (type != notificationType->end() && type->is_string())
+        {
+            metadata["NotificationTypeName"] = *type;
+        }
+        else
+        {
+            logInvalidMetadata("header.notificationType.type");
+        }
+    }
+
+    const auto recordID = header.find("recordID");
+    if (recordID == header.end() || !recordID->is_number_integer())
+    {
+        logInvalidMetadata("header.recordID");
+    }
+    else
+    {
+        metadata["RecordID"] = *recordID;
+    }
+
+    // Emit the collection even when no recognized record flags are set.
+    nlohmann::json recordFlags = nlohmann::json::array();
+    const auto flags = header.find("flags");
+    if (flags == header.end() || !flags->is_object())
+    {
+        logInvalidMetadata("header.flags.value");
+    }
+    else
+    {
+        const auto value = flags->find("value");
+        if (value == flags->end())
+        {
+            logInvalidMetadata("header.flags.value");
+        }
+        else
+        {
+            const std::optional<uint64_t> flagValue = getUnsigned(*value);
+            if (flagValue.has_value())
+            {
+                if ((*flagValue & EFI_HW_ERROR_FLAGS_SIMULATED) != 0)
+                {
+                    recordFlags.push_back("Simulated");
+                }
+                if ((*flagValue & EFI_HW_ERROR_FLAGS_PREVERR) != 0)
+                {
+                    recordFlags.push_back("PreviousError");
+                }
+                if ((*flagValue & EFI_HW_ERROR_FLAGS_RECOVERED) != 0)
+                {
+                    recordFlags.push_back("Recovered");
+                }
+            }
+            else
+            {
+                logInvalidMetadata("header.flags.value");
+            }
+        }
+    }
+    metadata["RecordFlags"] = std::move(recordFlags);
+}
+
+void addSectionMetadata(nlohmann::json& section,
+                        const nlohmann::json& sectionDescriptor)
+{
+    // Emit the collection even when no recognized section flags are set.
+    nlohmann::json sectionFlags = nlohmann::json::array();
+    const auto flags = sectionDescriptor.find("flags");
+    if (flags == sectionDescriptor.end() || !flags->is_object())
+    {
+        logInvalidMetadata("sectionDescriptors[].flags");
+    }
+    else
+    {
+        bool invalidFlags = false;
+        for (const auto& [source, redfish] : sectionFlagMappings)
+        {
+            const auto value = flags->find(source);
+            if (value == flags->end() || !value->is_boolean())
+            {
+                invalidFlags = true;
+                continue;
+            }
+            if (value->get<bool>())
+            {
+                sectionFlags.push_back(redfish);
+            }
+        }
+        if (invalidFlags)
+        {
+            logInvalidMetadata("sectionDescriptors[].flags");
+        }
+    }
+    section["SectionFlags"] = std::move(sectionFlags);
+}
+
 int constructDiagnosticData(nlohmann::json& out, const nlohmann::json& secdIt,
-                            const nlohmann::json& secIt)
+                            const nlohmann::json& secIt,
+                            const nlohmann::json& recordMetadata)
 {
     nlohmann::json::array_t arr;
     arr.push_back(secdIt);
     out["sectionDescriptors"] = std::move(arr);
 
+    nlohmann::json redfishSection = secIt;
+    redfishSection.update(recordMetadata);
+    addSectionMetadata(redfishSection, secdIt);
+
     nlohmann::json::array_t secarr;
-    secarr.push_back(secIt);
+    secarr.push_back(std::move(redfishSection));
     out["sections"] = std::move(secarr);
 
     return 0;
 }
+
+} // namespace
 
 CPER::CPER(std::span<const unsigned char> data)
 {
@@ -237,6 +439,7 @@ void CPER::prepareToLog(properties& dumpMap) const
     Header header;
     const auto headerJson = jsonData.find("header");
     std::map<std::string, std::string> commonProps;
+    nlohmann::json recordMetadata = nlohmann::json::object();
 
     if (headerJson == jsonData.end())
     {
@@ -247,6 +450,7 @@ void CPER::prepareToLog(properties& dumpMap) const
     else
     {
         // full CPER
+        addRecordMetadata(recordMetadata, *headerJson);
         commonProps["diagnosticDataType"] = "CPER";
         header = readHeader(*headerJson);
         commonProps["cperSeverity"] = header.severity;
@@ -272,7 +476,8 @@ void CPER::prepareToLog(properties& dumpMap) const
         entry["diagnosticData"] = toBase64String(this->cperData);
         entry["REDFISH_MESSAGE_ID"] = "Platform.1.0.PlatformError";
 
-        if (constructDiagnosticData(out, *sectionD, *sectionArr))
+        if (constructDiagnosticData(out, *sectionD, *sectionArr,
+                                    recordMetadata))
         {
             lg2::error("Could not construct CPER data for section.");
         }

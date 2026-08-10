@@ -163,6 +163,7 @@ if get_option('tests').enabled()
             boost,
             gmock_dep,
             gtest_dep,
+            libcper_parse_dep,
             nlohmann_json_dep,
             sdbusplus,
             phosphor_logging,
