@@ -16,8 +16,10 @@ import argparse
 # imports
 import json
 import os
+import re
+import sys
 
-version = "v0_8_0"
+version = "v0_9_0"
 
 HEADER = f"""<?xml version="1.0" encoding="UTF-8"?>
 <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
@@ -36,6 +38,20 @@ FOOTER = """
     </Schema>
   </edmx:DataServices>
 </edmx:Edmx>"""
+
+CSDL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+class ProjectionError(ValueError):
+    """A CPER-to-CSDL projection is malformed or does not match its source."""
+
+
+def schema_has_type(schema, expected):
+    """Return whether a JSON Schema type includes the expected type."""
+    schema_type = schema.get("type")
+    if isinstance(schema_type, list):
+        return expected in schema_type
+    return schema_type == expected
 
 
 class SchemaGenerator:
@@ -127,6 +143,137 @@ class SchemaGenerator:
         return propname[0].upper() + propname[1:]
 
 
+class CperProjection:
+    """Map properties from an expanded libcper schema into CSDL."""
+
+    def __init__(self, definition, source_name="<projection>"):
+        if not isinstance(definition, dict):
+            raise ProjectionError(f"{source_name}: root must be an object")
+        self.source_name = source_name
+        properties = definition.get("properties")
+        if not isinstance(properties, list) or not properties:
+            raise ProjectionError(
+                f"{source_name}: properties must be a non-empty array"
+            )
+
+        self.properties = []
+        targets = set()
+        for index, mapping in enumerate(properties):
+            context = f"{source_name}: properties[{index}]"
+            if not isinstance(mapping, dict):
+                raise ProjectionError(f"{context}: must be an object")
+            source = mapping.get("source")
+            target = mapping.get("target")
+            if not isinstance(source, str) or not source:
+                raise ProjectionError(
+                    f"{context}: source must be a non-empty string"
+                )
+            if (
+                not isinstance(target, str)
+                or CSDL_IDENTIFIER.fullmatch(target) is None
+            ):
+                raise ProjectionError(
+                    f"{context}: target must be a CSDL identifier"
+                )
+            if target in targets:
+                raise ProjectionError(
+                    f'{context}: duplicate target property "{target}"'
+                )
+            target_schema = mapping.get("targetSchema")
+            csdl_type = mapping.get("csdlType")
+            targets.add(target)
+            self.properties.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "targetSchema": target_schema,
+                    "csdlType": csdl_type,
+                }
+            )
+
+    @classmethod
+    def from_file(cls, filename):
+        try:
+            with open(filename, "r", encoding="utf-8") as projection_file:
+                definition = json.load(projection_file)
+        except (OSError, json.JSONDecodeError) as error:
+            raise ProjectionError(
+                f"Unable to load projection {filename}: {error}"
+            ) from error
+        return cls(definition, filename)
+
+    def _find_source_document(self, schema):
+        source_roots = {
+            mapping["source"].split(".", 1)[0].removesuffix("[]")
+            for mapping in self.properties
+        }
+        candidates = [schema]
+        if isinstance(schema.get("oneOf"), list):
+            candidates.extend(schema["oneOf"])
+        matches = [
+            candidate
+            for candidate in candidates
+            if source_roots
+            <= set(candidate.get("properties", {}))
+        ]
+        if len(matches) != 1:
+            raise ProjectionError(
+                f"{self.source_name}: expected one schema containing "
+                f"projection sources, found {len(matches)}"
+            )
+        return matches[0]
+
+    def _resolve_source(self, document, path):
+        current = document
+        for segment in path.split("."):
+            is_array = segment.endswith("[]")
+            name = segment[:-2] if is_array else segment
+            properties = current.get("properties")
+            if not isinstance(properties, dict) or name not in properties:
+                raise ProjectionError(
+                    f'{self.source_name}: source path "{path}" does not '
+                    f'exist at "{name}"'
+                )
+            current = properties[name]
+            if is_array:
+                if not schema_has_type(current, "array"):
+                    raise ProjectionError(
+                        f'{self.source_name}: "{name}" in source path '
+                        f'"{path}" is not an array'
+                    )
+                current = current.get("items")
+                if not isinstance(current, dict):
+                    raise ProjectionError(
+                        f'{self.source_name}: array "{name}" has no object '
+                        "items schema"
+                    )
+        return current
+
+    def _build_target_schema(self, mapping, source_schema):
+        target_schema = mapping.get("targetSchema")
+        if target_schema is None:
+            target_schema = source_schema
+        target_schema = target_schema.copy()
+        target_schema.pop("$id", None)
+        target_schema.pop("$schema", None)
+        if mapping.get("csdlType") is not None:
+            target_schema["x-csdl-type"] = mapping["csdlType"]
+        return target_schema
+
+    def resolve(self, schema):
+        """Resolve mappings against an expanded libcper root schema."""
+        document = self._find_source_document(schema)
+        resolved = {}
+        for mapping in self.properties:
+            source_schema = self._resolve_source(
+                document, mapping["source"]
+            )
+            resolved[mapping["target"]] = self._build_target_schema(
+                mapping, source_schema
+            )
+        return resolved
+
+
 class JsontoXml:
     """
     Class for creating an XML version of a JSON schema.
@@ -141,6 +288,7 @@ class JsontoXml:
         parent_basetype=None,
         required=False,
         start_property="sections",
+        projection=None,
     ):
         """
         Args:
@@ -149,6 +297,9 @@ class JsontoXml:
             required (bool): Populate only "required" properties of the json schema in the XML. Default is False.
             start_property (string): Change root element of the json schema, so XML will only be a subset. This should
                                     be defined in the "properties" field
+            projection (CperProjection): Optional mapping of properties from
+                                        outside start_property into the CSDL
+                                        root type.
         """
         self.typemap = {
             "integer": "Edm.Int64",
@@ -163,7 +314,9 @@ class JsontoXml:
         self.parent_basetype = parent_basetype
         self.required = required
         self.start_property = start_property
+        self.projection = projection
         self.error_status_present = False
+        self.enum_types = {}
 
         # Resolves $id and property duplications
         # These properties are also cast into baseid to prevent duplications
@@ -199,6 +352,127 @@ class JsontoXml:
         ]
         # Skips properties from being added to XML
         self.skip_props = []
+
+    def register_enum(self, owner_type, property_name, schema):
+        """Register a scalar or collection string enum."""
+        enum_schema = (
+            schema.get("items", {})
+            if schema_has_type(schema, "array")
+            else schema
+        )
+
+        members = enum_schema.get("enum")
+        if members is None:
+            return None
+
+        if not schema_has_type(enum_schema, "string"):
+            raise ValueError(
+                f"Enum property {owner_type}.{property_name} "
+                "must be a string enum"
+            )
+
+        enum_name = schema.get(
+            "x-csdl-enum-type",
+            property_name[0].upper() + property_name[1:],
+        )
+        identifiers = (enum_name, *members)
+        if any(
+            not isinstance(identifier, str)
+            or CSDL_IDENTIFIER.fullmatch(identifier) is None
+            for identifier in identifiers
+        ):
+            raise ValueError(
+                f"Enum property {owner_type}.{property_name} "
+                "contains an invalid CSDL identifier"
+            )
+
+        enum_definition = (tuple(members), owner_type)
+        existing_definition = self.enum_types.get(enum_name)
+        if (
+            existing_definition is not None
+            and existing_definition[0] != enum_definition[0]
+        ):
+            raise ValueError(
+                f"Enum {enum_name} is defined with conflicting members"
+            )
+
+        if existing_definition is None:
+            self.enum_types[enum_name] = enum_definition
+        return enum_name
+
+    def add_projection(self, xml, target_type, target_schemas):
+        """Add resolved projection declarations to a generated CSDL type."""
+        root_marker = f'      <ComplexType Name="{target_type}">\n'
+        if xml.count(root_marker) != 1:
+            raise ProjectionError(
+                f"Expected exactly one {target_type} CSDL root type"
+            )
+
+        root_start = xml.index(root_marker)
+        root_end = xml.index("      </ComplexType>\n", root_start)
+        root_xml = xml[root_start:root_end]
+        projected_types = ""
+        projected_properties = ""
+
+        for property_name, property_schema in target_schemas.items():
+            property_marker = f'<Property Name="{property_name}" '
+            if property_marker in root_xml:
+                raise ProjectionError(
+                    f"Projection target {target_type}.{property_name} "
+                    "already exists"
+                )
+
+            enum_type = self.register_enum(
+                target_type, property_name, property_schema
+            )
+            projected_properties += self.encode_xml(
+                "",
+                property_name,
+                "property",
+                type=property_schema.get("type"),
+                basetype=target_type,
+                enum_type=enum_type,
+                csdl_type=property_schema.get("x-csdl-type"),
+            )
+
+            if schema_has_type(property_schema, "object") or schema_has_type(
+                property_schema, "array"
+            ):
+                type_xml = self.jsonschema_to_xml(
+                    property_schema,
+                    property_name,
+                    "",
+                    prevproperty=target_type,
+                )[0]
+                if type_xml:
+                    projected_types += type_xml
+
+        return xml.replace(
+            root_marker,
+            projected_types + root_marker + projected_properties,
+            1,
+        )
+
+    def add_registered_enums(self, xml):
+        """Insert discovered enum declarations before their owning types."""
+        for enum_name, (members, owner_type) in self.enum_types.items():
+            type_marker = f'      <ComplexType Name="{owner_type}">\n'
+            if xml.count(type_marker) != 1:
+                raise ValueError(
+                    f"Expected exactly one {owner_type} complex type"
+                )
+            member_xml = "".join(
+                f'          <Member Name="{member}"/>\n'
+                for member in members
+            )
+            enum_xml = (
+                f'      <EnumType Name="{enum_name}">\n'
+                + member_xml
+                + "      </EnumType>\n\n"
+            )
+            xml = xml.replace(type_marker, enum_xml + type_marker, 1)
+
+        return xml
 
     def jsonschema_to_xml(self, schema, basetype, baseid, prevproperty=""):
         """
@@ -250,6 +524,7 @@ class JsontoXml:
 
                 start, end = self.encode_xml(baseid, basetype, "base")
                 property_xml = start
+                entity_name = baseid + basetype[0].upper() + basetype[1:]
 
                 # We need a way to return baseid to the parent property when the baseids
                 # are encapsulated in a list, like in oneOf[]
@@ -278,12 +553,17 @@ class JsontoXml:
                     if (baseid + prop).lower() in self.skip_props:
                         property_xml += self.handle_errorinfo(baseid, basetype)
                     else:
+                        enum_type = self.register_enum(
+                            entity_name, prop, subschema
+                        )
                         property_xml += self.encode_xml(
                             baseid,
                             prop,
                             "property",
                             type=subschema["type"],
                             basetype=basetype,
+                            enum_type=enum_type,
+                            csdl_type=subschema.get("x-csdl-type"),
                         )
                     xml_ret += self.jsonschema_to_xml(
                         propval, prop, baseid, prevproperty=basetype
@@ -357,7 +637,12 @@ class JsontoXml:
             result (string): XML schema for CPER output
         """
         xml_out = HEADER
+        self.enum_types.clear()
+        self.error_status_present = False
+        projected_schemas = {}
         start_property = self.start_property
+        if self.projection is not None:
+            projected_schemas = self.projection.resolve(schema)
         while not schema.get(start_property):
             if schema.get("oneOf"):
                 schema = schema["oneOf"][0]
@@ -371,9 +656,15 @@ class JsontoXml:
                 return
         schema = schema[start_property]
         base_schema = schema
-        xml_out += self.jsonschema_to_xml(
+        generated_xml = self.jsonschema_to_xml(
             base_schema, basetype=basetype, baseid=baseid
         )[0]
+        if projected_schemas:
+            generated_xml = self.add_projection(
+                generated_xml, basetype, projected_schemas
+            )
+        generated_xml = self.add_registered_enums(generated_xml)
+        xml_out += generated_xml
         xml_out += FOOTER
 
         return xml_out
@@ -424,7 +715,16 @@ class JsontoXml:
         )
         return xml
 
-    def encode_xml(self, baseid, val, ele, type=None, basetype=None):
+    def encode_xml(
+        self,
+        baseid,
+        val,
+        ele,
+        type=None,
+        basetype=None,
+        enum_type=None,
+        csdl_type=None,
+    ):
         """
         Format XML output
         Args:
@@ -434,6 +734,8 @@ class JsontoXml:
             ele (string): 'base' for Entity, 'property' for Property
             type (string): Used for converting json type to XML type
             basetype (string): Parent data type of property.
+            enum_type (string): CSDL enum type registered for the property.
+            csdl_type (string): Explicit CSDL primitive type override.
 
         Returns:
             result (string): XML schema for CPER output
@@ -452,6 +754,28 @@ class JsontoXml:
                 basetype = self.parent_basetype
             else:
                 basetype = basetype[0].upper() + basetype[1:]
+            if enum_type:
+                enum_namespace = (
+                    self.parent_basetype or f"NvidiaCPER.{version}"
+                )
+                property_type = enum_namespace + "." + enum_type
+                if type == "array":
+                    property_type = "Collection(" + property_type + ")"
+                return (
+                    '          <Property Name="'
+                    + prop_name
+                    + '" Type="'
+                    + property_type
+                    + '"></Property>\n'
+                )
+            if csdl_type:
+                return (
+                    '          <Property Name="'
+                    + prop_name
+                    + '" Type="'
+                    + csdl_type
+                    + '"></Property>\n'
+                )
             if type == "object" or type == "array":
                 if type == "array":
                     return (
@@ -592,6 +916,16 @@ def main():
         help="Basetype for all elements to inherit",
     )
 
+    for xml_parser in (parser_b, parser_c):
+        xml_parser.add_argument(
+            "-j",
+            "--projection",
+            help=(
+                "JSON projection that maps properties outside --argstart "
+                "into the generated CSDL root"
+            ),
+        )
+
     parser_b.add_argument("-x", "--header", nargs=1, help="XML header")
     parser_b.add_argument("-f", "--footer", nargs=1, help="XML footer")
     parser_b.add_argument(
@@ -614,6 +948,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    projection = None
+    projection_file = getattr(args, "projection", None)
+    if projection_file:
+        projection = CperProjection.from_file(projection_file)
 
     if args.subparser_name == "json_master":
         print("Creating master json")
@@ -665,6 +1004,7 @@ def main():
             parent_basetype=parent_basetype,
             required=args.required,
             start_property=argstart,
+            projection=projection,
         )
 
         # logfile='cper-json-full-log.json'
@@ -712,13 +1052,13 @@ def main():
             parent_basetype=parent_basetype,
             required=args.required,
             start_property=argstart,
+            projection=projection,
         )
 
         output = xml_obj.schema_parser(master_schema)
 
         out_file = "NvidiaCPER_v1.xml"
-        print("Saving output to NvidiaCPER_v1.xml")
-        print("Output filename: ", out_file)
+        print("Saving output to: ", out_file)
         with open(out_file, "w") as f:
             print(output, file=f)
 
@@ -731,4 +1071,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ProjectionError as error:
+        print(f"Projection error: {error}", file=sys.stderr)
+        raise SystemExit(2) from error
