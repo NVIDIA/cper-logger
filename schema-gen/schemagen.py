@@ -147,6 +147,7 @@ class CperProjection:
     """Map properties from an expanded libcper schema into CSDL."""
 
     def __init__(self, definition, source_name="<projection>"):
+        """Validate and store CPER-to-CSDL property mappings."""
         if not isinstance(definition, dict):
             raise ProjectionError(f"{source_name}: root must be an object")
         self.source_name = source_name
@@ -193,6 +194,7 @@ class CperProjection:
 
     @classmethod
     def from_file(cls, filename):
+        """Load a CPER projection definition from a JSON file."""
         try:
             with open(filename, "r", encoding="utf-8") as projection_file:
                 definition = json.load(projection_file)
@@ -203,6 +205,7 @@ class CperProjection:
         return cls(definition, filename)
 
     def _find_source_document(self, schema):
+        """Find the schema document containing all projected sources."""
         source_roots = {
             mapping["source"].split(".", 1)[0].removesuffix("[]")
             for mapping in self.properties
@@ -224,6 +227,7 @@ class CperProjection:
         return matches[0]
 
     def _resolve_source(self, document, path):
+        """Resolve a dotted projection path to its JSON Schema node."""
         current = document
         for segment in path.split("."):
             is_array = segment.endswith("[]")
@@ -250,6 +254,7 @@ class CperProjection:
         return current
 
     def _build_target_schema(self, mapping, source_schema):
+        """Build the target schema with projection-specific overrides."""
         target_schema = mapping.get("targetSchema")
         if target_schema is None:
             target_schema = source_schema
