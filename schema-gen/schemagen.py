@@ -178,12 +178,23 @@ class CperProjection:
                 raise ProjectionError(
                     f"{context}: target must be a CSDL identifier"
                 )
+            target = target[0].upper() + target[1:]
             if target in targets:
                 raise ProjectionError(
                     f'{context}: duplicate target property "{target}"'
                 )
             target_schema = mapping.get("targetSchema")
+            if target_schema is not None and not isinstance(
+                target_schema, dict
+            ):
+                raise ProjectionError(
+                    f"{context}: targetSchema must be an object"
+                )
             csdl_type = mapping.get("csdlType")
+            if csdl_type is not None and not isinstance(csdl_type, str):
+                raise ProjectionError(
+                    f"{context}: csdlType must be a string"
+                )
             targets.add(target)
             self.properties.append(
                 {
@@ -218,7 +229,8 @@ class CperProjection:
         matches = [
             candidate
             for candidate in candidates
-            if source_roots
+            if isinstance(candidate, dict)
+            and source_roots
             <= set(candidate.get("properties", {}))
         ]
         if len(matches) != 1:
@@ -260,6 +272,11 @@ class CperProjection:
         target_schema = mapping.get("targetSchema")
         if target_schema is None:
             target_schema = source_schema
+        if not isinstance(target_schema, dict):
+            raise ProjectionError(
+                f'{self.source_name}: schema for target '
+                f'"{mapping["target"]}" must be an object'
+            )
         target_schema = target_schema.copy()
         target_schema.pop("$id", None)
         target_schema.pop("$schema", None)
@@ -362,35 +379,55 @@ class JsontoXml:
 
     def register_enum(self, owner_type, property_name, schema):
         """Register a scalar or collection string enum."""
-        enum_schema = (
-            schema.get("items", {})
-            if schema_has_type(schema, "array")
-            else schema
-        )
+        if not isinstance(schema, dict):
+            raise ProjectionError(
+                f"Enum property {owner_type}.{property_name} "
+                "schema must be an object"
+            )
+
+        enum_schema = schema
+        if schema_has_type(schema, "array"):
+            enum_schema = schema.get("items", {})
+            if not isinstance(enum_schema, dict):
+                raise ProjectionError(
+                    f"Enum property {owner_type}.{property_name} "
+                    "array items must be an object"
+                )
 
         members = enum_schema.get("enum")
         if members is None:
             return None
 
+        if not isinstance(members, list) or not members:
+            raise ProjectionError(
+                f"Enum property {owner_type}.{property_name} "
+                "must declare a non-empty enum array"
+            )
+
         if not schema_has_type(enum_schema, "string"):
-            raise ValueError(
+            raise ProjectionError(
                 f"Enum property {owner_type}.{property_name} "
                 "must be a string enum"
             )
 
-        enum_name = schema.get(
-            "x-csdl-enum-type",
-            property_name[0].upper() + property_name[1:],
-        )
+        enum_name = schema.get("x-csdl-enum-type")
+        if enum_name is None:
+            enum_name = property_name[:1].upper() + property_name[1:]
         identifiers = (enum_name, *members)
         if any(
             not isinstance(identifier, str)
             or CSDL_IDENTIFIER.fullmatch(identifier) is None
             for identifier in identifiers
         ):
-            raise ValueError(
+            raise ProjectionError(
                 f"Enum property {owner_type}.{property_name} "
                 "contains an invalid CSDL identifier"
+            )
+
+        if len(set(members)) != len(members):
+            raise ProjectionError(
+                f"Enum property {owner_type}.{property_name} "
+                "contains duplicate members"
             )
 
         enum_definition = (tuple(members), owner_type)
@@ -399,7 +436,7 @@ class JsontoXml:
             existing_definition is not None
             and existing_definition[0] != enum_definition[0]
         ):
-            raise ValueError(
+            raise ProjectionError(
                 f"Enum {enum_name} is defined with conflicting members"
             )
 

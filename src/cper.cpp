@@ -447,6 +447,11 @@ void CPER::prepareToLog(properties& dumpMap) const
         // single-section CPER
         commonProps["diagnosticDataType"] = "CPERSection";
     }
+    else if (!headerJson->is_object())
+    {
+        lg2::error("Header property is not an object");
+        return;
+    }
     else
     {
         // full CPER
