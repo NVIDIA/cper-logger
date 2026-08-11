@@ -84,6 +84,7 @@ class SchemaGenerator:
                     self.ref_paths[filename] = schema_path
 
     def refresolve(self, ref):
+        """Load and return a referenced JSON Schema."""
         if ref not in self.ref_paths:
             print("Error no ref path named: ", ref)
             return
@@ -140,6 +141,7 @@ class SchemaGenerator:
         return schema
 
     def capitalize(self, propname):
+        """Uppercase the first character of a property name."""
         return propname[0].upper() + propname[1:]
 
 
@@ -675,6 +677,7 @@ class JsontoXml:
         return xml_out
 
     def get_schema_file(self, filename):
+        """Load and return a JSON Schema file."""
         with open(filename, "r") as schema_file:
             schema = json.load(schema_file)
         return schema
@@ -707,6 +710,7 @@ class JsontoXml:
         return ret
 
     def handle_errorinfo(self, baseid, basetype):
+        """Generate the standard cache and TLB error properties."""
         xml = ""
         xml += self.encode_xml(
             baseid,
@@ -813,9 +817,11 @@ class JsontoXml:
             print("wrong value for XML element: ", ele)
 
     def append_to_xml(self, xml, arg):
+        """Append an XML fragment to generated XML text."""
         return xml + arg
 
     def validate_xml(self, xmlf):
+        """Report duplicate complex type names in an XML file."""
         print("Validating XML")
         entity_names = []
         with open(xmlf, "r") as f:
@@ -829,6 +835,7 @@ class JsontoXml:
 
 
 def main():
+    """Run the requested JSON Schema or CSDL generation command."""
     parser = argparse.ArgumentParser(
         prog="JsonSchemaToXML",
         description="Create a master json schema by replacing refs, modify json properties, and convert it to XML.",
