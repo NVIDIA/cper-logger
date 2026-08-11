@@ -230,8 +230,9 @@ class CperProjection:
             candidate
             for candidate in candidates
             if isinstance(candidate, dict)
+            and isinstance(candidate.get("properties"), dict)
             and source_roots
-            <= set(candidate.get("properties", {}))
+            <= set(candidate["properties"])
         ]
         if len(matches) != 1:
             raise ProjectionError(
