@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION &
+ * SPDX-FileCopyrightText: Copyright (c) 2023-2026 NVIDIA CORPORATION &
  * AFFILIATES. All rights reserved. SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,12 @@
 
 #include "cper.hpp"
 
+#include <libcper/Cper.h>
+
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -112,6 +117,11 @@ std::vector<nlohmann::json::object_t> redfishOutput(const properties& m)
     return jOut;
 }
 
+nlohmann::json diagnosticData(const properties& entries, std::size_t index = 0)
+{
+    return nlohmann::json::parse(entries.at(index).at("jsonDiagnosticData"));
+}
+
 TEST(CPERTests, GoodParseCCPLEX)
 {
     properties prop;
@@ -126,8 +136,24 @@ TEST(CPERTests, GoodParseCCPLEX)
 
     // std::cout << nlohmann::json(rf[2]).dump(4, ' ') << '\n';
 
-    // TODO NEED TO ASSERT index 1-3
     ASSERT_EQ(prop.size(), 5);
+
+    const nlohmann::json& header = cp.getJson().at("header");
+    for (std::size_t index = 0; index < prop.size(); ++index)
+    {
+        const nlohmann::json redfishSection =
+            diagnosticData(prop, index).at("sections").at(0);
+        EXPECT_EQ(redfishSection.at("CPERRevision").at("Major"),
+                  header.at("revision").at("major"));
+        EXPECT_EQ(redfishSection.at("CPERRevision").at("Minor"),
+                  header.at("revision").at("minor"));
+        EXPECT_EQ(redfishSection.at("CreatorID"), header.at("creatorID"));
+        EXPECT_EQ(redfishSection.at("NotificationTypeName"),
+                  header.at("notificationType").at("type"));
+        EXPECT_EQ(redfishSection.at("RecordID"), header.at("recordID"));
+        EXPECT_TRUE(redfishSection.contains("RecordFlags"));
+        EXPECT_TRUE(redfishSection.contains("SectionFlags"));
+    }
 
     // TODO BUG
     EXPECT_EQ(
@@ -155,6 +181,126 @@ TEST(CPERTests, GoodParsePCIe)
         "PCIe");
     EXPECT_EQ(rf[0]["/CPER/NotificationType"],
               "09a9d5ac-5204-4214-96e5-94992e752bcd");
+
+    const nlohmann::json& header = cp.getJson().at("header");
+    const nlohmann::json redfishSection =
+        diagnosticData(prop).at("sections").at(0);
+    EXPECT_EQ(redfishSection.at("CPERRevision").at("Major"),
+              header.at("revision").at("major"));
+    EXPECT_EQ(redfishSection.at("CPERRevision").at("Minor"),
+              header.at("revision").at("minor"));
+    EXPECT_EQ(redfishSection.at("CreatorID"), header.at("creatorID"));
+    EXPECT_EQ(redfishSection.at("NotificationTypeName"),
+              header.at("notificationType").at("type"));
+    EXPECT_EQ(redfishSection.at("RecordID"), header.at("recordID"));
+    EXPECT_EQ(redfishSection.at("RecordFlags"), nlohmann::json::array());
+    EXPECT_EQ(redfishSection.at("SectionFlags"), nlohmann::json::array());
+    EXPECT_FALSE(redfishSection.contains("PartitionID"));
+}
+
+TEST(CPERTests, MapsRecordAndSectionMetadata)
+{
+    constexpr std::size_t pldmHeaderSize = 4;
+    std::vector<unsigned char> data(pcieGoodCper,
+                                    pcieGoodCper + pcieGoodCperLen);
+
+    uint32_t validationBits = 0;
+    std::memcpy(&validationBits,
+                data.data() + pldmHeaderSize +
+                    offsetof(EFI_COMMON_ERROR_RECORD_HEADER, ValidationBits),
+                sizeof(validationBits));
+    constexpr uint32_t partitionIDValid = 1U << 2;
+    validationBits |= partitionIDValid;
+    std::memcpy(data.data() + pldmHeaderSize +
+                    offsetof(EFI_COMMON_ERROR_RECORD_HEADER, ValidationBits),
+                &validationBits, sizeof(validationBits));
+
+    const EFI_GUID partitionID = {
+        0x12345678,
+        0x9abc,
+        0xdef0,
+        {0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0},
+    };
+    std::memcpy(data.data() + pldmHeaderSize +
+                    offsetof(EFI_COMMON_ERROR_RECORD_HEADER, PartitionID),
+                &partitionID, sizeof(partitionID));
+
+    constexpr uint64_t recordID = 9256198265739673602ULL;
+    std::memcpy(data.data() + pldmHeaderSize +
+                    offsetof(EFI_COMMON_ERROR_RECORD_HEADER, RecordID),
+                &recordID, sizeof(recordID));
+
+    constexpr uint32_t recordFlags = EFI_HW_ERROR_FLAGS_SIMULATED |
+                                     EFI_HW_ERROR_FLAGS_PREVERR |
+                                     EFI_HW_ERROR_FLAGS_RECOVERED;
+    std::memcpy(data.data() + pldmHeaderSize +
+                    offsetof(EFI_COMMON_ERROR_RECORD_HEADER, Flags),
+                &recordFlags, sizeof(recordFlags));
+
+    // Set every standard section-descriptor flag bit.
+    constexpr uint32_t descriptorFlags = 0xff;
+    std::memcpy(data.data() + pldmHeaderSize +
+                    sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
+                    offsetof(EFI_ERROR_SECTION_DESCRIPTOR, SectionFlags),
+                &descriptorFlags, sizeof(descriptorFlags));
+
+    CPER cp(data);
+    ASSERT_TRUE(cp.isValid());
+
+    properties prop;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+
+    const nlohmann::json& header = cp.getJson().at("header");
+    const nlohmann::json redfishSection =
+        diagnosticData(prop).at("sections").at(0);
+    EXPECT_EQ(redfishSection.at("PartitionID"), header.at("partitionID"));
+    EXPECT_EQ(redfishSection.at("RecordID").get<uint64_t>(), recordID);
+    EXPECT_EQ(
+        redfishSection.at("RecordFlags"),
+        nlohmann::json::array({"Simulated", "PreviousError", "Recovered"}));
+    EXPECT_EQ(redfishSection.at("SectionFlags"),
+              nlohmann::json::array({"Primary", "ContainmentWarning", "Reset",
+                                     "ErrorThresholdExceeded",
+                                     "ResourceNotAccessible", "LatentError",
+                                     "Propagated", "Overflow"}));
+}
+
+TEST(CPERTests, RejectsNegativeUnsignedMetadata)
+{
+    CPER cp(pcieGoodCper);
+    ASSERT_TRUE(cp.isValid());
+
+    // Simulate malformed libcper output for fields that CPER defines as
+    // unsigned integers.
+    nlohmann::json& json = const_cast<nlohmann::json&>(cp.getJson());
+    const nlohmann::json major = json["header"]["revision"]["major"];
+    const nlohmann::json minor = json["header"]["revision"]["minor"];
+
+    properties prop;
+    json["header"]["revision"]["major"] = -1;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+    EXPECT_FALSE(
+        diagnosticData(prop).at("sections").at(0).contains("CPERRevision"));
+
+    prop.clear();
+    json["header"]["revision"]["major"] = major;
+    json["header"]["revision"]["minor"] = -1;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+    EXPECT_FALSE(
+        diagnosticData(prop).at("sections").at(0).contains("CPERRevision"));
+
+    prop.clear();
+    json["header"]["revision"]["minor"] = minor;
+    json["header"]["recordID"] = -1;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+    const nlohmann::json redfishSection =
+        diagnosticData(prop).at("sections").at(0);
+    EXPECT_TRUE(redfishSection.contains("CPERRevision"));
+    EXPECT_FALSE(redfishSection.contains("RecordID"));
 }
 
 TEST(CPERTests, FailParse)
