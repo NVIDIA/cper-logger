@@ -20,23 +20,23 @@ from the record header and its matching section descriptor.
 
 For example, the seven metadata properties added in v0.9 are mapped as follows:
 
-| libcper source | Redfish property | CSDL type |
-| --- | --- | --- |
-| `header.revision` | `CPERRevision` | `NvidiaCPER.v0_9_0.CPERRevision` |
-| `header.partitionID` | `PartitionID` | `Edm.Guid` |
-| `header.creatorID` | `CreatorID` | `Edm.Guid` |
-| `header.notificationType.type` | `NotificationTypeName` | `Edm.String` |
-| `header.recordID` | `RecordID` | `Edm.Decimal` |
-| `header.flags.value` | `RecordFlags` | `Collection(NvidiaCPER.v0_9_0.RecordFlag)` |
-| `sectionDescriptors[].flags` | `SectionFlags` | `Collection(NvidiaCPER.v0_9_0.SectionFlag)` |
+| libcper source                 | Redfish property       | CSDL type                                   |
+| ------------------------------ | ---------------------- | ------------------------------------------- |
+| `header.revision`              | `CPERRevision`         | `NvidiaCPER.v0_9_0.CPERRevision`            |
+| `header.partitionID`           | `PartitionID`          | `Edm.Guid`                                  |
+| `header.creatorID`             | `CreatorID`            | `Edm.Guid`                                  |
+| `header.notificationType.type` | `NotificationTypeName` | `Edm.String`                                |
+| `header.recordID`              | `RecordID`             | `Edm.Decimal`                               |
+| `header.flags.value`           | `RecordFlags`          | `Collection(NvidiaCPER.v0_9_0.RecordFlag)`  |
+| `sectionDescriptors[].flags`   | `SectionFlags`         | `Collection(NvidiaCPER.v0_9_0.SectionFlag)` |
 
 `NvidiaCPER_v0_9_0_projection.json` tells the schema generator to add these
 properties to the generated `NvidiaCPER` type. It is separate from libcper's
 JSON schemas because it describes the Redfish layout rather than libcper's JSON
 layout.
 
-Run the generator from a temporary directory. It writes
-`NvidiaCPER_v1.xml` to the current directory:
+Run the generator from a temporary directory. It writes `NvidiaCPER_v1.xml` to
+the current directory:
 
 ```sh
 CPER_LOGGER=/path/to/cper-logger
@@ -55,8 +55,8 @@ Each projected property can contain:
 
 - `source`: The path in libcper's JSON Schema. `[]` indicates an array.
 - `target`: The property name added to `NvidiaCPER`.
-- `targetSchema`: An optional schema used when the Redfish type differs from
-  the libcper type.
+- `targetSchema`: An optional schema used when the Redfish type differs from the
+  libcper type.
 - `csdlType`: An optional CSDL type such as `Edm.Guid` or `Edm.Decimal`.
 
 `RecordFlags` and `SectionFlags` use `targetSchema` because libcper represents

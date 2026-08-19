@@ -192,9 +192,7 @@ class CperProjection:
                 )
             csdl_type = mapping.get("csdlType")
             if csdl_type is not None and not isinstance(csdl_type, str):
-                raise ProjectionError(
-                    f"{context}: csdlType must be a string"
-                )
+                raise ProjectionError(f"{context}: csdlType must be a string")
             targets.add(target)
             self.properties.append(
                 {
@@ -231,8 +229,7 @@ class CperProjection:
             for candidate in candidates
             if isinstance(candidate, dict)
             and isinstance(candidate.get("properties"), dict)
-            and source_roots
-            <= set(candidate["properties"])
+            and source_roots <= set(candidate["properties"])
         ]
         if len(matches) != 1:
             raise ProjectionError(
@@ -275,7 +272,7 @@ class CperProjection:
             target_schema = source_schema
         if not isinstance(target_schema, dict):
             raise ProjectionError(
-                f'{self.source_name}: schema for target '
+                f"{self.source_name}: schema for target "
                 f'"{mapping["target"]}" must be an object'
             )
         target_schema = target_schema.copy()
@@ -290,9 +287,7 @@ class CperProjection:
         document = self._find_source_document(schema)
         resolved = {}
         for mapping in self.properties:
-            source_schema = self._resolve_source(
-                document, mapping["source"]
-            )
+            source_schema = self._resolve_source(document, mapping["source"])
             resolved[mapping["target"]] = self._build_target_schema(
                 mapping, source_schema
             )
@@ -507,8 +502,7 @@ class JsontoXml:
                     f"Expected exactly one {owner_type} complex type"
                 )
             member_xml = "".join(
-                f'          <Member Name="{member}"/>\n'
-                for member in members
+                f'          <Member Name="{member}"/>\n' for member in members
             )
             enum_xml = (
                 f'      <EnumType Name="{enum_name}">\n'

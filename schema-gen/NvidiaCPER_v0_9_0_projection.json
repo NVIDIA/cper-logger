@@ -1,74 +1,70 @@
 {
-  "description": "Maps CPER header and section-descriptor metadata into the flattened NvidiaCPER Redfish OEM object.",
-  "properties": [
-    {
-      "source": "header.revision",
-      "target": "CPERRevision",
-      "description": "Revision of the CPER record header."
-    },
-    {
-      "source": "header.partitionID",
-      "target": "PartitionID",
-      "csdlType": "Edm.Guid",
-      "description": "Software partition on which the error occurred, when present."
-    },
-    {
-      "source": "header.creatorID",
-      "target": "CreatorID",
-      "csdlType": "Edm.Guid",
-      "description": "Creator of the CPER record."
-    },
-    {
-      "source": "header.notificationType.type",
-      "target": "NotificationTypeName",
-      "description": "Human-readable libcper name for the notification type."
-    },
-    {
-      "source": "header.recordID",
-      "target": "RecordID",
-      "csdlType": "Edm.Decimal",
-      "description": "Unsigned 64-bit CPER record identifier."
-    },
-    {
-      "source": "header.flags.value",
-      "target": "RecordFlags",
-      "description": "All recognized flags set in the CPER record-header bitmask.",
-      "targetSchema": {
-        "type": "array",
-        "uniqueItems": true,
-        "items": {
-          "type": "string",
-          "enum": [
-            "Simulated",
-            "PreviousError",
-            "Recovered"
-          ]
+    "description": "Maps CPER header and section-descriptor metadata into the flattened NvidiaCPER Redfish OEM object.",
+    "properties": [
+        {
+            "source": "header.revision",
+            "target": "CPERRevision",
+            "description": "Revision of the CPER record header."
         },
-        "x-csdl-enum-type": "RecordFlag"
-      }
-    },
-    {
-      "source": "sectionDescriptors[].flags",
-      "target": "SectionFlags",
-      "description": "Recognized flags set on the descriptor corresponding to this CPER section.",
-      "targetSchema": {
-        "type": "array",
-        "uniqueItems": true,
-        "items": {
-          "type": "string",
-          "enum": [
-            "Primary",
-            "ContainmentWarning",
-            "Reset",
-            "ErrorThresholdExceeded",
-            "ResourceNotAccessible",
-            "LatentError",
-            "Propagated",
-            "Overflow"
-          ]
+        {
+            "source": "header.partitionID",
+            "target": "PartitionID",
+            "csdlType": "Edm.Guid",
+            "description": "Software partition on which the error occurred, when present."
         },
-        "x-csdl-enum-type": "SectionFlag"
-      }
-    }
-  ]
+        {
+            "source": "header.creatorID",
+            "target": "CreatorID",
+            "csdlType": "Edm.Guid",
+            "description": "Creator of the CPER record."
+        },
+        {
+            "source": "header.notificationType.type",
+            "target": "NotificationTypeName",
+            "description": "Human-readable libcper name for the notification type."
+        },
+        {
+            "source": "header.recordID",
+            "target": "RecordID",
+            "csdlType": "Edm.Decimal",
+            "description": "Unsigned 64-bit CPER record identifier."
+        },
+        {
+            "source": "header.flags.value",
+            "target": "RecordFlags",
+            "description": "All recognized flags set in the CPER record-header bitmask.",
+            "targetSchema": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "type": "string",
+                    "enum": ["Simulated", "PreviousError", "Recovered"]
+                },
+                "x-csdl-enum-type": "RecordFlag"
+            }
+        },
+        {
+            "source": "sectionDescriptors[].flags",
+            "target": "SectionFlags",
+            "description": "Recognized flags set on the descriptor corresponding to this CPER section.",
+            "targetSchema": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "Primary",
+                        "ContainmentWarning",
+                        "Reset",
+                        "ErrorThresholdExceeded",
+                        "ResourceNotAccessible",
+                        "LatentError",
+                        "Propagated",
+                        "Overflow"
+                    ]
+                },
+                "x-csdl-enum-type": "SectionFlag"
+            }
+        }
+    ]
 }
