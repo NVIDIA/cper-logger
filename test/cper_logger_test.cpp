@@ -266,6 +266,43 @@ TEST(CPERTests, MapsRecordAndSectionMetadata)
                                      "Propagated", "Overflow"}));
 }
 
+TEST(CPERTests, RejectsNegativeUnsignedMetadata)
+{
+    CPER cp(pcieGoodCper);
+    ASSERT_TRUE(cp.isValid());
+
+    // Simulate malformed libcper output for fields that CPER defines as
+    // unsigned integers.
+    nlohmann::json& json = const_cast<nlohmann::json&>(cp.getJson());
+    const nlohmann::json major = json["header"]["revision"]["major"];
+    const nlohmann::json minor = json["header"]["revision"]["minor"];
+
+    properties prop;
+    json["header"]["revision"]["major"] = -1;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+    EXPECT_FALSE(
+        diagnosticData(prop).at("sections").at(0).contains("CPERRevision"));
+
+    prop.clear();
+    json["header"]["revision"]["major"] = major;
+    json["header"]["revision"]["minor"] = -1;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+    EXPECT_FALSE(
+        diagnosticData(prop).at("sections").at(0).contains("CPERRevision"));
+
+    prop.clear();
+    json["header"]["revision"]["minor"] = minor;
+    json["header"]["recordID"] = -1;
+    cp.prepareToLog(prop);
+    ASSERT_EQ(prop.size(), 1);
+    const nlohmann::json redfishSection =
+        diagnosticData(prop).at("sections").at(0);
+    EXPECT_TRUE(redfishSection.contains("CPERRevision"));
+    EXPECT_FALSE(redfishSection.contains("RecordID"));
+}
+
 TEST(CPERTests, FailParse)
 {
     properties prop;
