@@ -503,7 +503,7 @@ class JsontoXml:
         for enum_name, (members, owner_type) in self.enum_types.items():
             type_marker = f'      <ComplexType Name="{owner_type}">\n'
             if xml.count(type_marker) != 1:
-                raise ValueError(
+                raise ProjectionError(
                     f"Expected exactly one {owner_type} complex type"
                 )
             member_xml = "".join(

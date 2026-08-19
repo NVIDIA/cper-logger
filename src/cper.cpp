@@ -93,12 +93,15 @@ void addRecordMetadata(nlohmann::json& metadata, const nlohmann::json& header)
     {
         const auto major = revision->find("major");
         const auto minor = revision->find("minor");
-        if (major != revision->end() && minor != revision->end() &&
-            major->is_number_integer() && minor->is_number_integer())
+        const std::optional<uint64_t> majorValue =
+            (major != revision->end()) ? getUnsigned(*major) : std::nullopt;
+        const std::optional<uint64_t> minorValue =
+            (minor != revision->end()) ? getUnsigned(*minor) : std::nullopt;
+        if (majorValue.has_value() && minorValue.has_value())
         {
             metadata["CPERRevision"] = {
-                {"Major", *major},
-                {"Minor", *minor},
+                {"Major", *majorValue},
+                {"Minor", *minorValue},
             };
         }
         else
@@ -149,13 +152,15 @@ void addRecordMetadata(nlohmann::json& metadata, const nlohmann::json& header)
     }
 
     const auto recordID = header.find("recordID");
-    if (recordID == header.end() || !recordID->is_number_integer())
+    const std::optional<uint64_t> recordIDValue =
+        (recordID != header.end()) ? getUnsigned(*recordID) : std::nullopt;
+    if (!recordIDValue.has_value())
     {
         logInvalidMetadata("header.recordID");
     }
     else
     {
-        metadata["RecordID"] = *recordID;
+        metadata["RecordID"] = *recordIDValue;
     }
 
     // Emit the collection even when no recognized record flags are set.
