@@ -17,6 +17,10 @@
 
 #include "cper.hpp"
 
+#ifdef CPER_PERSISTENT_STORAGE_ENABLED
+#include "cper_manager.hpp"
+#endif
+
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
@@ -24,9 +28,24 @@
 #include <span>
 #include <vector>
 
-std::shared_ptr<sdbusplus::asio::connection> conn = nullptr;
+#ifdef CPER_PERSISTENT_STORAGE_ENABLED
+#ifndef CPER_STORAGE_PATH
+#define CPER_STORAGE_PATH "/var/lib/cper-logger"
+#endif
+#ifndef CPER_MAX_ENTRIES
+#define CPER_MAX_ENTRIES 100
+#endif
+#ifndef CPER_MAX_SIZE_KB
+#define CPER_MAX_SIZE_KB 100
+#endif
+#endif
 
-// CPER.Logging.CreateLog "s"
+std::shared_ptr<sdbusplus::asio::connection> conn = nullptr;
+#ifdef CPER_PERSISTENT_STORAGE_ENABLED
+std::shared_ptr<phosphor::cper::Manager> gManager = nullptr;
+#endif
+
+// CPER.Logging.CreateLog "ay"
 void cperCreateLog(const std::vector<unsigned char>& cper)
 {
     properties prop;
@@ -38,7 +57,16 @@ void cperCreateLog(const std::vector<unsigned char>& cper)
         lg2::error("Error creating log");
         return;
     }
-    lg2::debug("{1} sections found", "1", prop.size());
+
+#ifdef CPER_PERSISTENT_STORAGE_ENABLED
+    // One persistent D-Bus entry per CPER record (all sections).
+    if (gManager != nullptr)
+    {
+        gManager->store(
+            std::vector<uint8_t>(cper.begin(), cper.end()),
+            prop[0], cp.getJson());
+    }
+#endif
 
     for (const auto& section : prop)
     {
@@ -55,6 +83,12 @@ int main(void)
     conn->request_name("xyz.openbmc_project.CPERLogger");
 
     auto server = sdbusplus::asio::object_server(conn);
+
+#ifdef CPER_PERSISTENT_STORAGE_ENABLED
+    gManager = std::make_shared<phosphor::cper::Manager>(
+        server, CPER_STORAGE_PATH, CPER_MAX_ENTRIES,
+        static_cast<size_t>(CPER_MAX_SIZE_KB) * 1024ULL);
+#endif
 
     std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
         server.add_interface("/xyz/openbmc_project/cperlogger",
