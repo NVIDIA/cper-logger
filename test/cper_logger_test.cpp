@@ -22,13 +22,20 @@
 #include "pcie/good_cper.h"
 
 #include "cper.hpp"
+#include "cper_entry.hpp"
+#include "cper_manager.hpp"
 
 #include <libcper/Cper.h>
+
+#include <sdbusplus/asio/object_server.hpp>
 
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 
@@ -430,6 +437,311 @@ TEST(CPERTests, LogFunction)
     {
         GTEST_SKIP() << "D-Bus not available: " << e.what();
     }
+}
+
+namespace
+{
+
+std::filesystem::path makeTempDir()
+{
+    char tmpl[] = "/tmp/cper-manager-test-XXXXXX";
+    char* dir = mkdtemp(tmpl);
+    if (dir == nullptr)
+    {
+        throw std::runtime_error("mkdtemp failed");
+    }
+    return {dir};
+}
+
+std::vector<uint8_t> readFile(const std::filesystem::path& path)
+{
+    std::ifstream f(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(f),
+            std::istreambuf_iterator<char>()};
+}
+
+std::filesystem::path binPath(const std::filesystem::path& dir, uint64_t id)
+{
+    return dir / (std::format("{:010}", id) + ".bin");
+}
+
+std::vector<uint8_t> pcieCper()
+{
+    return {pcieGoodCper, pcieGoodCper + pcieGoodCperLen};
+}
+
+std::vector<uint8_t> nvidiaCper()
+{
+    return {nvidiaCcplexGoodCper,
+            nvidiaCcplexGoodCper + nvidiaCcplexGoodCperLen};
+}
+
+// Fixture providing a real D-Bus connection/object_server (required by
+// CperEntry::CperEntry(), which registers a live interface) and a scratch
+// storage directory. Only connection setup is allowed to skip the test
+// (matches the sandbox's D-Bus-unavailable case); assertions in the test
+// body are never swallowed, so real regressions still fail the test.
+//
+// Entry existence/properties are checked via Manager::getEntry() rather
+// than a D-Bus round trip: a synchronous sd_bus_call() back into this same
+// connection races with sdbusplus::asio's own async plumbing on the same
+// fd and is flaky (intermittent ELOOP) under some container sandboxes.
+class ManagerTest : public ::testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+        try
+        {
+            conn = std::make_shared<sdbusplus::asio::connection>(io);
+        }
+        catch (const std::exception& e)
+        {
+            GTEST_SKIP() << "D-Bus not available: " << e.what();
+        }
+        server = std::make_unique<sdbusplus::asio::object_server>(conn);
+        storageDir = makeTempDir();
+    }
+
+    void TearDown() override
+    {
+        std::error_code ec;
+        std::filesystem::remove_all(storageDir, ec);
+    }
+
+    boost::asio::io_context io;
+    std::shared_ptr<sdbusplus::asio::connection> conn;
+    std::unique_ptr<sdbusplus::asio::object_server> server;
+    std::filesystem::path storageDir;
+};
+
+bool hasEntry(const phosphor::cper::Manager& mgr, uint64_t id)
+{
+    return mgr.getEntry(id) != nullptr;
+}
+
+} // namespace
+
+TEST_F(ManagerTest, StoreCreatesFileAndDbusEntry)
+{
+    CPER cp(pcieGoodCper);
+    properties prop;
+    cp.prepareToLog(prop);
+    ASSERT_TRUE(cp.isValid());
+    ASSERT_EQ(prop.size(), 1);
+
+    phosphor::cper::Manager mgr(*server, storageDir.string());
+    const std::vector<uint8_t> raw = pcieCper();
+    mgr.store(raw, prop[0], cp.getJson());
+
+    const auto path = binPath(storageDir, 0);
+    ASSERT_TRUE(std::filesystem::exists(path));
+    EXPECT_EQ(readFile(path), raw);
+
+    const auto* entry = mgr.getEntry(0);
+    ASSERT_NE(entry, nullptr);
+    EXPECT_EQ(entry->getCperLogFilePath(), path.string());
+    EXPECT_EQ(entry->getDiagnosticDataType(),
+              "xyz.openbmc_project.CPER.Entry.DiagnosticDataType.CPER");
+    EXPECT_FALSE(entry->getDiagnosticInfo().empty());
+}
+
+TEST_F(ManagerTest, StoreIncrementsIdsSequentially)
+{
+    CPER cp(pcieGoodCper);
+    properties prop;
+    cp.prepareToLog(prop);
+    ASSERT_TRUE(cp.isValid());
+
+    phosphor::cper::Manager mgr(*server, storageDir.string());
+    const std::vector<uint8_t> raw = pcieCper();
+    mgr.store(raw, prop[0], cp.getJson());
+    mgr.store(raw, prop[0], cp.getJson());
+
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 0)));
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 1)));
+    EXPECT_TRUE(hasEntry(mgr, 0));
+    EXPECT_TRUE(hasEntry(mgr, 1));
+}
+
+TEST_F(ManagerTest, StoreWithUnknownDiagnosticDataTypeDefaultsToCper)
+{
+    CPER cp(pcieGoodCper);
+    phosphor::cper::Manager mgr(*server, storageDir.string());
+    mgr.store(pcieCper(), {}, cp.getJson());
+
+    const auto* entry = mgr.getEntry(0);
+    ASSERT_NE(entry, nullptr);
+    EXPECT_EQ(entry->getDiagnosticDataType(),
+              "xyz.openbmc_project.CPER.Entry.DiagnosticDataType.CPER");
+}
+
+TEST_F(ManagerTest, StoreWithSectionDiagnosticDataType)
+{
+    CPER cp(pcieGoodCper);
+    std::map<std::string, std::string> commonProps = {
+        {"diagnosticDataType", "CPERSection"}};
+
+    phosphor::cper::Manager mgr(*server, storageDir.string());
+    mgr.store(pcieCper(), commonProps, cp.getJson());
+
+    const auto* entry = mgr.getEntry(0);
+    ASSERT_NE(entry, nullptr);
+    EXPECT_EQ(entry->getDiagnosticDataType(),
+              "xyz.openbmc_project.CPER.Entry.DiagnosticDataType.CPERSection");
+}
+
+TEST_F(ManagerTest, StoreEmptyPayloadIsNoop)
+{
+    phosphor::cper::Manager mgr(*server, storageDir.string());
+    mgr.store({}, {}, {});
+
+    EXPECT_FALSE(hasEntry(mgr, 0));
+    EXPECT_TRUE(std::filesystem::is_empty(storageDir));
+}
+
+TEST_F(ManagerTest, StoreRejectsPayloadExceedingMaxSize)
+{
+    phosphor::cper::Manager mgr(*server, storageDir.string(),
+                                phosphor::cper::Manager::kDefaultMaxEntries,
+                                /*maxTotalBytes=*/10);
+    CPER cp(pcieGoodCper);
+    mgr.store(pcieCper(), {}, cp.getJson());
+
+    EXPECT_FALSE(hasEntry(mgr, 0));
+    EXPECT_TRUE(std::filesystem::is_empty(storageDir));
+}
+
+TEST_F(ManagerTest, StoreRejectsWhenMaxEntriesIsZero)
+{
+    phosphor::cper::Manager mgr(*server, storageDir.string(), /*maxEntries=*/0,
+                                phosphor::cper::Manager::kDefaultMaxBytes);
+    CPER cp(pcieGoodCper);
+    mgr.store(pcieCper(), {}, cp.getJson());
+
+    EXPECT_FALSE(hasEntry(mgr, 0));
+    EXPECT_TRUE(std::filesystem::is_empty(storageDir));
+}
+
+TEST_F(ManagerTest, EvictsOldestWhenMaxEntriesExceeded)
+{
+    phosphor::cper::Manager mgr(*server, storageDir.string(),
+                                /*maxEntries=*/2,
+                                phosphor::cper::Manager::kDefaultMaxBytes);
+    CPER cp(pcieGoodCper);
+    const std::vector<uint8_t> raw = pcieCper();
+
+    mgr.store(raw, {}, cp.getJson()); // id 0
+    mgr.store(raw, {}, cp.getJson()); // id 1
+    mgr.store(raw, {}, cp.getJson()); // id 2, should evict id 0
+
+    EXPECT_FALSE(std::filesystem::exists(binPath(storageDir, 0)));
+    EXPECT_FALSE(hasEntry(mgr, 0));
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 1)));
+    EXPECT_TRUE(hasEntry(mgr, 1));
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 2)));
+    EXPECT_TRUE(hasEntry(mgr, 2));
+}
+
+TEST_F(ManagerTest, EvictsOldestWhenMaxSizeExceeded)
+{
+    // pcieGoodCperLen (412) + nvidiaCcplexGoodCperLen (1212) exceeds this,
+    // so storing both must evict the first (pcie) to make room.
+    phosphor::cper::Manager mgr(*server, storageDir.string(),
+                                phosphor::cper::Manager::kDefaultMaxEntries,
+                                /*maxTotalBytes=*/1500);
+    CPER pcieCp(pcieGoodCper);
+    CPER nvidiaCp(nvidiaCcplexGoodCper);
+
+    mgr.store(pcieCper(), {}, pcieCp.getJson()); // id 0, 412 bytes
+    mgr.store(nvidiaCper(), {},
+              nvidiaCp.getJson()); // id 1, 1212 bytes -> evicts id 0
+
+    EXPECT_FALSE(std::filesystem::exists(binPath(storageDir, 0)));
+    EXPECT_FALSE(hasEntry(mgr, 0));
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 1)));
+    EXPECT_TRUE(hasEntry(mgr, 1));
+    EXPECT_EQ(readFile(binPath(storageDir, 1)), nvidiaCper());
+}
+
+TEST_F(ManagerTest, SurvivesRestartByReloadingExistingEntries)
+{
+    CPER cp(pcieGoodCper);
+    properties prop;
+    cp.prepareToLog(prop);
+    ASSERT_TRUE(cp.isValid());
+
+    {
+        phosphor::cper::Manager mgr(*server, storageDir.string());
+        mgr.store(pcieCper(), prop[0], cp.getJson());
+        ASSERT_TRUE(hasEntry(mgr, 0));
+    }
+    // The Manager (and its CperEntry objects) went out of scope here.
+    ASSERT_TRUE(std::filesystem::exists(binPath(storageDir, 0)));
+
+    phosphor::cper::Manager mgr2(*server, storageDir.string());
+    const auto* entry = mgr2.getEntry(0);
+    ASSERT_NE(entry, nullptr);
+    EXPECT_EQ(entry->getCperLogFilePath(), binPath(storageDir, 0).string());
+    EXPECT_EQ(entry->getDiagnosticDataType(),
+              "xyz.openbmc_project.CPER.Entry.DiagnosticDataType.CPER");
+
+    // New entries continue numbering after the highest id loaded from disk.
+    mgr2.store(pcieCper(), prop[0], cp.getJson());
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 1)));
+    EXPECT_TRUE(hasEntry(mgr2, 1));
+}
+
+TEST_F(ManagerTest, LoadExistingRemovesUnloadableFilesButKeepsOthers)
+{
+    // Corrupt .bin file: passes the numeric-name check but fails CPER
+    // parsing, so it should be deleted.
+    {
+        std::ofstream f(binPath(storageDir, 0), std::ios::binary);
+        unsigned char tiny = 0x00;
+        f.write(reinterpret_cast<const char*>(&tiny), sizeof(tiny));
+    }
+    // Non-numeric .bin file name: should be deleted without being parsed.
+    std::ofstream(storageDir / "not-a-number.bin", std::ios::binary) << "x";
+    // Non-.bin file: not owned by Manager, must be left alone.
+    std::ofstream(storageDir / "ignored.txt", std::ios::binary) << "keep me";
+
+    phosphor::cper::Manager mgr(*server, storageDir.string());
+
+    EXPECT_FALSE(std::filesystem::exists(binPath(storageDir, 0)));
+    EXPECT_FALSE(std::filesystem::exists(storageDir / "not-a-number.bin"));
+    EXPECT_TRUE(std::filesystem::exists(storageDir / "ignored.txt"));
+    EXPECT_FALSE(hasEntry(mgr, 0));
+}
+
+TEST_F(ManagerTest,
+       LoadExistingEvictsExcessWhenLimitsTightenedSincePreviousBoot)
+{
+    CPER cp(pcieGoodCper);
+    properties prop;
+    cp.prepareToLog(prop);
+    ASSERT_TRUE(cp.isValid());
+
+    {
+        phosphor::cper::Manager mgr(*server, storageDir.string());
+        mgr.store(pcieCper(), prop[0], cp.getJson()); // id 0
+        mgr.store(pcieCper(), prop[0], cp.getJson()); // id 1
+        mgr.store(pcieCper(), prop[0], cp.getJson()); // id 2
+    }
+    ASSERT_TRUE(std::filesystem::exists(binPath(storageDir, 2)));
+
+    // Reopen with a tighter limit than what created these files; startup
+    // reconciliation should evict down to the newest entry only.
+    phosphor::cper::Manager mgr2(*server, storageDir.string(),
+                                 /*maxEntries=*/1,
+                                 phosphor::cper::Manager::kDefaultMaxBytes);
+
+    EXPECT_FALSE(std::filesystem::exists(binPath(storageDir, 0)));
+    EXPECT_FALSE(std::filesystem::exists(binPath(storageDir, 1)));
+    EXPECT_TRUE(std::filesystem::exists(binPath(storageDir, 2)));
+    EXPECT_FALSE(hasEntry(mgr2, 0));
+    EXPECT_FALSE(hasEntry(mgr2, 1));
+    EXPECT_TRUE(hasEntry(mgr2, 2));
 }
 
 int main(int argc, char** argv)

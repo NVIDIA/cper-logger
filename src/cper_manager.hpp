@@ -58,6 +58,14 @@ class Manager
                const std::map<std::string, std::string>& commonProps,
                const nlohmann::json& fullJson);
 
+    // Introspection accessor: returns nullptr if no entry with this id is
+    // currently tracked.
+    const CperEntry* getEntry(uint64_t id) const
+    {
+        auto it = entries.find(id);
+        return it != entries.end() ? it->second.get() : nullptr;
+    }
+
   private:
     void loadExisting();
     // Evicts oldest entries until the configured limits are satisfied.
@@ -75,7 +83,7 @@ class Manager
     // Deletes an on-disk file that loadExisting() could not turn into a
     // tracked entry, so it doesn't leak disk space forever.
     void removeUnloadable(const std::filesystem::path& path,
-                      const std::string& reason);
+                          const std::string& reason);
 
     std::filesystem::path entryPath(uint64_t id) const;
     size_t totalStorageBytes() const;
@@ -87,7 +95,8 @@ class Manager
 
     // Ordered by id; lowest id == oldest entry.
     std::map<uint64_t, std::shared_ptr<CperEntry>> entries;
-    // Actual on-disk path per entry (may differ from entryPath() for legacy files).
+    // Actual on-disk path per entry (may differ from entryPath() for legacy
+    // files).
     std::map<uint64_t, std::filesystem::path> filePaths;
     uint64_t nextId = 0;
 };

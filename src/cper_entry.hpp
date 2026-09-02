@@ -39,12 +39,24 @@ class CperEntry
   public:
     CperEntry(sdbusplus::asio::object_server& server, uint64_t id,
               const std::map<std::string, std::string>& commonProps,
-              const nlohmann::json& fullJson,
-              const std::string& filePath);
+              const nlohmann::json& fullJson, const std::string& filePath);
 
     ~CperEntry()
     {
         server.remove_interface(iface);
+    }
+
+    const std::string& getDiagnosticDataType() const
+    {
+        return diagnosticDataType;
+    }
+    const std::string& getDiagnosticInfo() const
+    {
+        return diagnosticInfo;
+    }
+    const std::string& getCperLogFilePath() const
+    {
+        return cperLogFilePath;
     }
 
   private:
