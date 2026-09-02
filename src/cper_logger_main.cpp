@@ -62,9 +62,8 @@ void cperCreateLog(const std::vector<unsigned char>& cper)
     // One persistent D-Bus entry per CPER record (all sections).
     if (gManager != nullptr)
     {
-        gManager->store(
-            std::vector<uint8_t>(cper.begin(), cper.end()),
-            prop[0], cp.getJson());
+        gManager->store(std::vector<uint8_t>(cper.begin(), cper.end()), prop[0],
+                        cp.getJson());
     }
 #endif
 

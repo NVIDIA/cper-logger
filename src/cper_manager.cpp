@@ -58,17 +58,18 @@ void Manager::store(const std::vector<uint8_t>& rawPldmData,
 
     if (maxEntries == 0 || rawPldmData.size() > maxTotalBytes)
     {
-        lg2::error(
-            "CPER payload ({SIZE} bytes) can never fit within configured limits "
-            "(maxEntries={MAX_E}, maxTotalBytes={MAX_B}); dropping",
-            "SIZE", rawPldmData.size(), "MAX_E", maxEntries, "MAX_B",
-            maxTotalBytes);
+        lg2::error("CPER payload ({SIZE} bytes) can never fit within "
+                   "configured limits "
+                   "(maxEntries={MAX_E}, maxTotalBytes={MAX_B}); dropping",
+                   "SIZE", rawPldmData.size(), "MAX_E", maxEntries, "MAX_B",
+                   maxTotalBytes);
         return;
     }
 
     if (!enforceCapacity(rawPldmData.size()))
     {
-        lg2::error("Unable to free enough capacity for incoming CPER; dropping");
+        lg2::error(
+            "Unable to free enough capacity for incoming CPER; dropping");
         return;
     }
 
@@ -188,9 +189,9 @@ bool Manager::enforceCapacity(size_t incomingBytes)
     // against limits that may have tightened since the last boot.
     bool reservingSlot = incomingBytes > 0;
     while (!entries.empty() &&
-          ((reservingSlot ? entries.size() >= maxEntries
-                          : entries.size() > maxEntries) ||
-           totalStorageBytes() + incomingBytes > maxTotalBytes))
+           ((reservingSlot ? entries.size() >= maxEntries
+                           : entries.size() > maxEntries) ||
+            totalStorageBytes() + incomingBytes > maxTotalBytes))
     {
         if (!removeOldest())
         {
@@ -226,15 +227,15 @@ bool Manager::removeOldest()
     filePaths.erase(id);
     entries.erase(it);
     lg2::info("Removed CPER entry {ID} at {PATH} to make room for a new entry",
-             "ID", id, "PATH", path.string());
+              "ID", id, "PATH", path.string());
     return true;
 }
 
 void Manager::removeUnloadable(const std::filesystem::path& path,
-                           const std::string& reason)
+                               const std::string& reason)
 {
     lg2::warning("Removing unrecoverable CPER file {PATH}: {REASON}", "PATH",
-                path.string(), "REASON", reason);
+                 path.string(), "REASON", reason);
     std::error_code ec;
     std::filesystem::remove(path, ec);
     if (ec)

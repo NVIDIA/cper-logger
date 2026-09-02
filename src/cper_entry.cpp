@@ -31,15 +31,15 @@ static std::string toTypeString(const std::string& diagnosticDataType)
     {
         return "xyz.openbmc_project.CPER.Entry.DiagnosticDataType.CPER";
     }
-    lg2::error("Unknown DiagnosticDataType value: {1}", "1", diagnosticDataType);
+    lg2::error("Unknown DiagnosticDataType value: {1}", "1",
+               diagnosticDataType);
     return "xyz.openbmc_project.CPER.Entry.DiagnosticDataType.CPER";
 }
 
 CperEntry::CperEntry(sdbusplus::asio::object_server& server, uint64_t id,
                      const std::map<std::string, std::string>& commonProps,
                      const nlohmann::json& fullJson,
-                     const std::string& filePath) :
-    server(server)
+                     const std::string& filePath) : server(server)
 {
     auto get = [&](const std::string& key) -> std::string {
         auto it = commonProps.find(key);
@@ -48,10 +48,11 @@ CperEntry::CperEntry(sdbusplus::asio::object_server& server, uint64_t id,
 
     diagnosticDataType = toTypeString(get("diagnosticDataType"));
 
-    diagnosticInfo = fullJson.is_null()
-                         ? ""
-                         : fullJson.dump(-1, ' ', false,
-                                         nlohmann::json::error_handler_t::replace);
+    diagnosticInfo =
+        fullJson.is_null()
+            ? ""
+            : fullJson.dump(-1, ' ', false,
+                            nlohmann::json::error_handler_t::replace);
 
     cperLogFilePath = filePath;
 
