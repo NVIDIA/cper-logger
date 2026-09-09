@@ -104,9 +104,19 @@ if not libcper_parse_dep.found()
     inc += [include_directories('subprojects')]
 endif
 
+cper_logger_a_srcs = [
+    'src/cper.cpp',
+    'src/cper_entry.cpp',
+    'src/cper_manager.cpp',
+]
+cper_logger_a_cpp_args = []
+if get_option('cper-persistent-storage').enabled()
+    cper_logger_a_cpp_args += ['-DCPER_PERSISTENT_STORAGE_ENABLED']
+endif
+
 cper_logger_a = static_library(
     'cper_logger_a',
-    'src/cper.cpp',
+    cper_logger_a_srcs,
     dependencies: [
         boost,
         libcper_parse_dep,
@@ -115,6 +125,7 @@ cper_logger_a = static_library(
         sdbusplus,
     ],
     include_directories: inc,
+    cpp_args: cper_logger_a_cpp_args,
 )
 
 executable(
@@ -124,6 +135,11 @@ executable(
     include_directories: inc,
     install: true,
     link_with: [cper_logger_a],
+    cpp_args: cper_logger_a_cpp_args + [
+        '-DCPER_STORAGE_PATH="' + get_option('cper-storage-path') + '"',
+        '-DCPER_MAX_ENTRIES=' + get_option('cper-max-entries').to_string(),
+        '-DCPER_MAX_SIZE_KB=' + get_option('cper-max-size-kb').to_string(),
+    ],
 )
 
 if get_option('tests').enabled()

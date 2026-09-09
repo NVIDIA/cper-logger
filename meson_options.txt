@@ -1,1 +1,10 @@
 option('tests', type: 'feature', value: 'enabled', description: 'Build tests.')
+option(
+    'cper-persistent-storage',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Persist incoming CPER entries to flash and expose them as D-Bus objects.',
+)
+option('cper-storage-path', type: 'string', value: '/var/lib/cper-logger', description: 'Directory on flash for persisted CPER binary files.')
+option('cper-max-entries', type: 'integer', value: 100, min: 0, description: 'Maximum number of stored CPER entries.')
+option('cper-max-size-kb', type: 'integer', value: 100, min: 0, description: 'Maximum total size of CPER files in KB.')
